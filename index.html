@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>短冊文字入れ</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- html2canvas CDN (画像保存用) -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+    <!-- 設定・ダウンロードボタン -->
+    <div id="top-buttons">
+        <img src="img/settings.png" id="settingsBtn" alt="設定">
+        <img src="img/download.png" id="downloadBtn" alt="ダウンロード">
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main-container">
+        <!-- スライダー -->
+        <div class="sliders">
+            <table>
+                <tr>
+                    <td>
+                        <label>フォントサイズ</label>
+                    </td>
+                    <td>
+                        <input type="range" id="fontSizeSlider" min="12" max="60" value="36">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>行間</label>
+                    </td>
+                    <td>
+                        <input type="range" id="lineHeightSlider" min="1" max="3" step="0.1" value="1.5">
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 短冊画像 -->
+        <div class="image-container">
+            <img src="img/tanzaku.png" id="tanzakuImage" alt="短冊" crossorigin="anonymous">
+            <div id="textLayer" class="draggable" contenteditable="false"></div>
+        </div>
+    </div>
+
+    <!-- モーダルウィンドウ -->
+    <div id="modalOverlay">
+        <div id="modal">
+            <textarea id="textInput" placeholder="短冊に入れる文字を入力"></textarea>
+            <button id="applyText">反映</button>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+
+</html>
