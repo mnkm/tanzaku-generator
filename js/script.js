@@ -43,8 +43,6 @@ $(async function () {
             const lineOffset = fontSize * lineHeight * index;
             ctx.drawImage(textObj, canvas.width / 2 + offsetX - lineOffset, canvas.height * 0.15 + offsetY)
         });
-
-        drawTextOnCanvas(canvas);
     }
 
     $('#settingsBtn').on('click', () => $modal.show());
