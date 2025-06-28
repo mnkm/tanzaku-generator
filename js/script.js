@@ -1,6 +1,6 @@
 $(async function () {
-    const exampleFontFamilyName = "Zen Kurenaido";
-    const urlFamilyName = exampleFontFamilyName.replace(/ /g, "+"); // URLでは空白を+に置き換える
+    const fontFamily = "Zen Kurenaido";
+    const urlFamilyName = fontFamily.replace(/ /g, "+"); // URLでは空白を+に置き換える
     const googleApiUrl = `https://fonts.googleapis.com/css?family=${urlFamilyName}`; // Google Fonts APIのURL
 
     const response = await fetch(googleApiUrl);
@@ -12,7 +12,7 @@ $(async function () {
 
         for (const url of matchUrls) {
             // 後は普通にFontFaceを追加
-            const font = new FontFace(exampleFontFamilyName, url);
+            const font = new FontFace(fontFamily, url);
             await font.load();
             document.fonts.add(font);
         }
@@ -27,7 +27,7 @@ $(async function () {
     let lineHeight = 1.5;
     let offsetX = 0;
     let offsetY = 0;
-
+    
     function updateCanvas() {
         const canvas = $textCanvas[0];
         const img = $baseImage[0];
@@ -43,6 +43,8 @@ $(async function () {
             const lineOffset = fontSize * lineHeight * index;
             ctx.drawImage(textObj, canvas.width / 2 + offsetX - lineOffset, canvas.height * 0.15 + offsetY)
         });
+
+        drawTextOnCanvas(canvas);
     }
 
     $('#settingsBtn').on('click', () => $modal.show());
@@ -103,6 +105,7 @@ $(async function () {
                 width: '100%',
                 height: 'auto'
             });
+
         updateCanvas();
     });
 
