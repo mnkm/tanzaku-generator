@@ -79,7 +79,7 @@ $(async function () {
         canvas.height = img.height;
 
         const ctx = canvas.getContext('2d');
-        // ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const textAry = inputText.split('\n');
