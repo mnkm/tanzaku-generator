@@ -1,85 +1,121 @@
-$(function () {
-    // モーダル初期表示
-    $('#modalOverlay').show();
+$(async function () {
+    const exampleFontFamilyName = "Zen Kurenaido";
+    const urlFamilyName = exampleFontFamilyName.replace(/ /g, "+"); // URLでは空白を+に置き換える
+    const googleApiUrl = `https://fonts.googleapis.com/css?family=${urlFamilyName}`; // Google Fonts APIのURL
 
-    // モーダル反映ボタン
-    $('#applyText').click(function () {
-        const inputText = $('#textInput').val().replace(/\n/g, '\n');
-        $('#textLayer').text(inputText).attr('contenteditable', false);
-        $('#modalOverlay').hide();
+    const response = await fetch(googleApiUrl);
+    if (response.ok) {
+        // url()の中身のURLだけ抽出
+        const cssFontFace = await response.text();
+        const matchUrls = cssFontFace.match(/url\(.+?\)/g);
+        if (!matchUrls) throw new Error("フォントが見つかりませんでした");
+
+        for (const url of matchUrls) {
+            // 後は普通にFontFaceを追加
+            const font = new FontFace(exampleFontFamilyName, url);
+            await font.load();
+            document.fonts.add(font);
+        }
+    }
+
+    const $modal = $('#modal');
+    const $textCanvas = $('#textCanvas');
+    const $baseImage = $('#baseImage');
+
+    let inputText = "";
+    let fontSize = 36;
+    let lineHeight = 1.5;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    function updateCanvas() {
+        const canvas = $textCanvas[0];
+        const img = $baseImage[0];
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const textAry = inputText.split('\n');
+        let line = 0;
+        textAry.forEach(function (text, index) {
+            const textObj = createVerticalTextCanvas(text == '' ? ' ' : text, 'normal ' + fontSize + 'px Zen Kurenaido, sans-serif');
+            const lineOffset = fontSize * lineHeight * index;
+            ctx.drawImage(textObj, canvas.width / 2 + offsetX - lineOffset, canvas.height * 0.15 + offsetY)
+        });
+    }
+
+    $('#settingsBtn').on('click', () => $modal.show());
+
+    $('#applyText').on('click', () => {
+        inputText = $('#textInput').val();
+        $modal.hide();
+        // Webフォントの読み込みを待ってから描画
+        document.fonts.ready.then(() => {
+            updateCanvas();
+        });
     });
 
-    // スライダー連動
     $('#fontSizeSlider').on('input', function () {
-        const size = $(this).val();
-        $('#textLayer').css({
-            'font-size': size + 'px',
-            'letter-spacing': size * 0.1 + 'px'
+        fontSize = parseInt(this.value);
+        // Webフォントの読み込みを待ってから描画
+        document.fonts.ready.then(() => {
+            updateCanvas();
         });
     });
 
     $('#lineHeightSlider').on('input', function () {
-        const height = $(this).val();
-        $('#textLayer').css('line-height', height);
+        lineHeight = parseFloat(this.value);
+        // Webフォントの読み込みを待ってから描画
+        document.fonts.ready.then(() => {
+            updateCanvas();
+        });
     });
+
+    $('#downloadBtn').on('click', function () {
+        const canvas = document.createElement('canvas');
+        const img = $baseImage[0];
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const textAry = inputText.split('\n');
+        let line = 0;
+        textAry.forEach(function (text, index) {
+            const textObj = createVerticalTextCanvas(text == '' ? ' ' : text, 'normal ' + fontSize + 'px Zen Kurenaido, sans-serif');
+            const lineOffset = fontSize * lineHeight * index;
+            ctx.drawImage(textObj, canvas.width / 2 + offsetX + lineOffset, canvas.height / 2 + offsetY)
+        });
+
+        const link = document.createElement('a');
+        link.download = 'output.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+
+    $baseImage.on('load', function () {
+        $textCanvas.css({
+            width: this.width,
+            height: this.height
+        });
+        updateCanvas();
+    });
+
+    $modal.show();
 
     // ドラッグ機能
-    let isDragging = false;
-    let offset = { x: 0, y: 0 };
+    interact('#textCanvas').draggable({
+        listeners: {
+            move(event) {
 
-    $('#textLayer').on('mousedown touchstart', function (e) {
-        isDragging = true;
-        const ev = e.type === 'touchstart' ? e.touches[0] : e;
-        const pos = $(this).position();
-        offset.x = ev.pageX - pos.left;
-        offset.y = ev.pageY - pos.top;
-    });
+                offsetX = offsetX + event.dx;
+                offsetY = offsetY + event.dy;
 
-    $(document).on('mousemove touchmove', function (e) {
-        if (isDragging) {
-            const ev = e.type === 'touchmove' ? e.touches[0] : e;
-            $('#textLayer').css({
-                left: ev.pageX - offset.x,
-                top: ev.pageY - offset.y
-            });
+                updateCanvas();
+            }
         }
-    }).on('mouseup touchend', function () {
-        isDragging = false;
     });
-
-    // 設定ボタンで再表示
-    $('#settingsBtn').click(() => {
-        $('#modalOverlay').show();
-    });
-
-    // ダウンロード処理
-    $('#downloadBtn').click(function () {
-        html2canvas($('.image-container')[0], {useCORS: true}).then(canvas => {
-            const link = document.createElement('a');
-            link.download = 'tanzaku.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
-    });
-
-    function updateTextLayerSize() {
-        const $img = $('#bgImage');
-        const $textLayer = $('#textLayer');
-
-        const imgWidth = $img.width();
-        const imgHeight = $img.height();
-
-        // テキストレイヤーを画像に合わせる
-        $textLayer.css({
-            width: imgWidth + 'px',
-            height: imgHeight + 'px',
-            maxWidth: imgWidth + 'px',
-            maxHeight: imgHeight + 'px',
-        });
-    }
-
-    // ページロード & リサイズ時に実行
-    $(window).on('load resize', updateTextLayerSize);
-    $('#bgImage').on('load', updateTextLayerSize);
-
 });
