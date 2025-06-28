@@ -38,7 +38,6 @@ $(async function () {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const textAry = inputText.split('\n');
-        let line = 0;
         textAry.forEach(function (text, index) {
             const textObj = createVerticalTextCanvas(text == '' ? ' ' : text, 'normal ' + fontSize + 'px Zen Kurenaido, sans-serif');
             const lineOffset = fontSize * lineHeight * index;
@@ -80,14 +79,14 @@ $(async function () {
         canvas.height = img.height;
 
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
+        // ctx.drawImage(img, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const textAry = inputText.split('\n');
-        let line = 0;
         textAry.forEach(function (text, index) {
             const textObj = createVerticalTextCanvas(text == '' ? ' ' : text, 'normal ' + fontSize + 'px Zen Kurenaido, sans-serif');
             const lineOffset = fontSize * lineHeight * index;
-            ctx.drawImage(textObj, canvas.width / 2 + offsetX + lineOffset, canvas.height / 2 + offsetY)
+            ctx.drawImage(textObj, canvas.width / 2 + offsetX - lineOffset, canvas.height * 0.15 + offsetY)
         });
 
         const link = document.createElement('a');
