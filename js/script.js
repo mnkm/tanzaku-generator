@@ -29,12 +29,14 @@ $(async function () {
     let offsetY = 0;
 
     function updateCanvas() {
+        const scale = window.devicePixelRatio || 1;
         const canvas = $textCanvas[0];
         const img = $baseImage[0];
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = img.naturalWidth * scale;
+        canvas.height = img.naturalHeight * scale;
 
         const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const textAry = inputText.split('\n');
@@ -73,12 +75,14 @@ $(async function () {
     });
 
     $('#downloadBtn').on('click', function () {
+        const scale = window.devicePixelRatio || 1;
         const canvas = document.createElement('canvas');
         const img = $baseImage[0];
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = img.naturalWidth * scale;
+        canvas.height = img.naturalHeight * scale;
 
         const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
         ctx.drawImage(img, 0, 0);
 
         const textAry = inputText.split('\n');
@@ -95,10 +99,14 @@ $(async function () {
     });
 
     $baseImage.on('load', function () {
-        $textCanvas.css({
-            width: this.width,
-            height: this.height
-        });
+        const img = this;
+        $textCanvas
+            .attr('width', img.naturalWidth)
+            .attr('height', img.naturalHeight)
+            .css({
+                width: '100%',
+                height: 'auto'
+            });
         updateCanvas();
     });
 
