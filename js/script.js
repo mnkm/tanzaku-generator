@@ -102,8 +102,8 @@ $(async function () {
             const columns = textBox.text
                 .split('\n')
                 .flatMap(text => wrapVerticalText(text, font, availableHeight));
-            const maxColumns = Math.max(1, Math.floor(textBox.width / (textBox.fontSize * textBox.lineHeight)));
-            return columns.slice(0, maxColumns);
+            // 列を切り捨てず、入力文字をすべて描画する
+            return columns;
         }
 
         function resizeTextBoxToText(textBox) {
@@ -132,6 +132,13 @@ $(async function () {
             // プレビューとダウンロードで共通利用する文字描画処理
             textBoxes.forEach(textBox => {
                 const font = 'normal ' + textBox.fontSize + 'px Zen Kurenaido, sans-serif';
+
+                // 枠外の文字は状態として保持したまま、描画時だけ非表示にする
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(textBox.x, textBox.y, textBox.width, textBox.height);
+                ctx.clip();
+
                 getWrappedColumns(textBox, font).forEach(function (text, index) {
                     const textObj = createVerticalTextCanvas(text, font);
                     const lineOffset = textBox.fontSize * textBox.lineHeight * index;
@@ -141,6 +148,8 @@ $(async function () {
                         textBox.y
                     );
                 });
+
+                ctx.restore();
             });
         }
 
@@ -268,12 +277,24 @@ $(async function () {
 
         $('#applyText').on('click', () => {
             const activeTextBox = getTextBox(activeTextBoxId);
+            const text = $('#textInput').val();
+
             if (!activeTextBox) {
+                if (!text.trim()) {
+                    $modal.hide();
+                    return;
+                }
+
+                const newTextBox = createTextBox();
+                newTextBox.text = text;
+                document.fonts.ready.then(() => {
+                    resizeTextBoxToText(newTextBox);
+                    updateCanvas();
+                });
                 $modal.hide();
                 return;
             }
 
-            const text = $('#textInput').val();
             if (!text.trim()) {
                 removeTextBox(activeTextBox.id);
                 $modal.hide();
