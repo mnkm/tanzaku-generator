@@ -3,10 +3,11 @@ body {
     font-family: sans-serif;
 }
 
+/* 操作アイコンを画面右上に固定 */
 .main-container {
     text-align: center;
     align-items: center;
-    padding: 20px;
+    padding: 20px 12px;
 }
 
 .buttons {
@@ -21,6 +22,7 @@ body {
     cursor: pointer;
 }
 
+/* スマホ幅ではスライダーを画面内に収める */
 .controls {
     margin: 50px auto 20px auto;
     display: flex;
@@ -28,6 +30,16 @@ body {
     align-items: center;
     text-align: right;
     gap: 10px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.controls table {
+    max-width: 100%;
+}
+
+.controls input[type="range"] {
+    width: min(220px, 45vw);
 }
 
 .image-area {
@@ -35,29 +47,38 @@ body {
     display: inline-block;
 }
 
+/* 背景画像の表示サイズを基準にCanvasと選択枠を重ねる */
 #baseImage {
     max-width: 100%;
     height: auto;
     display: block;
 }
 
+/* 実際の文字を描画する透明Canvas */
 #textCanvas {
     position: absolute;
     top: 0;
     left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
     pointer-events: none;
 }
 
+/* 入力・確認モーダル共通のレイアウト */
 .modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    padding: 16px;
+    box-sizing: border-box;
     background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
+    overflow-y: auto;
     z-index: 20;
 }
 
@@ -72,9 +93,12 @@ body {
 
 #textInput {
     width: 100%;
-    height: 100px;
+    max-width: 100%;
+    min-height: 100px;
+    max-height: 45vh;
     font-size: 16px;
     margin-bottom: 10px;
+    box-sizing: border-box;
 }
 
 #applyText {
@@ -82,12 +106,74 @@ body {
     padding: 10px;
     width: 100%;
     font-size: 16px;
+    box-sizing: border-box;
+}
+
+.confirm-content p {
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.confirm-buttons button {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
 }
 
 #textCanvas {
     position: absolute;
     top: 0;
     left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    touch-action: none;
+    pointer-events: none;
+}
+
+#textBoxes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* 未選択時は背景を隠さず、選択時だけ枠とハンドルを表示 */
+.text-box {
+    position: absolute;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.08);
+    box-sizing: border-box;
+    cursor: move;
     touch-action: none;
     pointer-events: auto;
+}
+
+.text-box.active {
+    border: 2px dashed rgba(190, 70, 30, 0.95);
+}
+
+.text-box::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    bottom: -7px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(20, 80, 120, 0.9);
+    background: #fff;
+    box-sizing: border-box;
+    display: none;
+}
+
+.text-box.active::after {
+    display: block;
 }

@@ -3,13 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>短冊文字入れツール</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+    <!-- UI操作、ドラッグ、縦書き描画に使用する外部ライブラリ -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -20,11 +20,15 @@
 
     <!-- メイン画面 -->
     <div class="main-container">
+        <!-- 画像上のテキストボックスを操作するツールバー -->
         <div class="buttons">
+            <img src="img/add.png" id="addBtn" alt="追加">
+            <img src="img/delete.png" id="deleteBtn" alt="削除">
             <img src="img/settings.png" id="settingsBtn" alt="設定">
             <img src="img/download.png" id="downloadBtn" alt="ダウンロード">
         </div>
 
+        <!-- 選択中テキストボックスの文字設定 -->
         <div class="controls">
             <table>
                 <tr>
@@ -46,17 +50,31 @@
             </table>
         </div>
 
+        <!-- 背景画像、文字Canvas、選択用の枠を同じ座標系で重ねる -->
         <div class="image-area">
             <img id="baseImage" src="img/tanzaku.png" alt="背景画像">
             <canvas id="textCanvas"></canvas>
+            <div id="textBoxes" aria-label="文字の描画エリア"></div>
         </div>
     </div>
 
     <!-- モーダル -->
+    <!-- 文字の入力・編集モーダル -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <textarea id="textInput" placeholder="短冊に入れる文字を入力"></textarea>
             <button id="applyText">反映</button>
+        </div>
+    </div>
+
+    <!-- 選択中テキストボックスの削除確認モーダル -->
+    <div id="deleteConfirm" class="modal">
+        <div class="modal-content confirm-content">
+            <p>現在選択しているテキストボックスを削除しますか？</p>
+            <div class="confirm-buttons">
+                <button id="confirmDelete">はい</button>
+                <button id="cancelDelete">いいえ</button>
+            </div>
         </div>
     </div>
 
