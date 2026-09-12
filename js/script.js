@@ -1,4 +1,5 @@
 $(async function () {
+    // Canvas描画用フォントを読み込み、失敗時はCSSの代替フォントを使う
     const fontFamily = "Zen Kurenaido";
     const urlFamilyName = fontFamily.replace(/ /g, "+"); // URLでは空白を+に置き換える
         const googleApiUrl = `https://fonts.googleapis.com/css?family=${urlFamilyName}`;
@@ -26,6 +27,7 @@ $(async function () {
         const $baseImage = $('#baseImage');
         const $textBoxes = $('#textBoxes');
 
+        // textBoxesが描画データ、DOM要素が操作用の枠を担当する
         let nextTextBoxId = 1;
         let activeTextBoxId = null;
         let pendingTextBoxId = null;
@@ -36,6 +38,7 @@ $(async function () {
         }
 
         function getCanvasScale() {
+            // 表示Canvasの座標を、自然サイズのCanvas座標へ変換する倍率
             const canvas = $textCanvas[0];
             const rect = canvas.getBoundingClientRect();
             return {
@@ -45,6 +48,7 @@ $(async function () {
         }
 
         function syncTextBox(textBox) {
+            // レスポンシブ表示後も、自然サイズの座標を枠のCSS座標へ変換する
             const canvas = $textCanvas[0];
             const rect = canvas.getBoundingClientRect();
             const areaRect = $textBoxes[0].parentElement.getBoundingClientRect();
@@ -66,6 +70,7 @@ $(async function () {
         }
 
         function wrapVerticalText(text, font, maxHeight) {
+            // 文字ごとの高さを計測し、描画可能な高さを超えたら次の縦列へ送る
             const columns = [];
             let column = '';
 
@@ -89,33 +94,42 @@ $(async function () {
         }
 
         function getWrappedColumns(textBox, font) {
+            const image = $baseImage[0];
+            const availableHeight = Math.max(1, Math.min(
+                textBox.height,
+                image.naturalHeight - textBox.y
+            ));
             const columns = textBox.text
                 .split('\n')
-                .flatMap(text => wrapVerticalText(text, font, textBox.height));
+                .flatMap(text => wrapVerticalText(text, font, availableHeight));
             const maxColumns = Math.max(1, Math.floor(textBox.width / (textBox.fontSize * textBox.lineHeight)));
             return columns.slice(0, maxColumns);
         }
 
         function resizeTextBoxToText(textBox) {
+            // 追加直後だけ、入力内容と画像の描画可能領域から枠を自動サイズ化する
             const font = 'normal ' + textBox.fontSize + 'px Zen Kurenaido, sans-serif';
             const lines = textBox.text.split('\n').map(text => text || ' ');
             const sizes = lines.map(text => measureVerticalTextCanvasSize(text, font));
             const lineSpacing = textBox.fontSize * textBox.lineHeight;
             const image = $baseImage[0];
-            const maxWidth = image.naturalWidth || Infinity;
-            const maxHeight = image.naturalHeight || Infinity;
+            const maxWidth = Math.max(30, (image.naturalWidth || Infinity) - textBox.x);
+            const maxHeight = Math.max(30, (image.naturalHeight || Infinity) - textBox.y);
+            const contentHeight = Math.max(30, ...sizes.map(size => size.height));
+
+            textBox.height = Math.min(maxHeight, contentHeight);
+            const columns = textBox.text
+                .split('\n')
+                .flatMap(text => wrapVerticalText(text, font, textBox.height));
 
             textBox.width = Math.min(
                 maxWidth,
-                Math.max(30, sizes.reduce((width, size) => width + size.width, 0) + lineSpacing * (sizes.length - 1))
-            );
-            textBox.height = Math.min(
-                maxHeight,
-                Math.max(30, ...sizes.map(size => size.height))
+                Math.max(30, columns.length * lineSpacing)
             );
         }
 
         function drawText(ctx) {
+            // プレビューとダウンロードで共通利用する文字描画処理
             textBoxes.forEach(textBox => {
                 const font = 'normal ' + textBox.fontSize + 'px Zen Kurenaido, sans-serif';
                 getWrappedColumns(textBox, font).forEach(function (text, index) {
@@ -131,6 +145,7 @@ $(async function () {
         }
 
         function updateCanvas() {
+            // 背景画像の自然サイズでCanvasを再生成して全ボックスを描画する
             const canvas = $textCanvas[0];
             const img = $baseImage[0];
             if (!img.naturalWidth || !img.naturalHeight) {
@@ -153,6 +168,7 @@ $(async function () {
         }
 
         function bindTextBoxInteractions(textBox) {
+            // 枠ごとに移動・リサイズ操作を登録する
             const $element = textBox.element;
 
             $element.on('pointerdown', () => selectTextBox(textBox));
@@ -189,6 +205,7 @@ $(async function () {
         }
 
         function createTextBox() {
+            // 新規ボックスの状態と操作用DOMを同時に作成する
             const textBox = {
                 id: nextTextBoxId++,
                 text: '',
@@ -213,6 +230,27 @@ $(async function () {
             $modal.css('display', 'flex');
         }
 
+        function removeTextBox(id) {
+            // 状態配列と画面上の操作枠を同時に削除する
+            const index = textBoxes.findIndex(textBox => textBox.id === id);
+            const textBox = getTextBox(id);
+            if (index === -1 || !textBox) {
+                return false;
+            }
+
+            textBox.element.remove();
+            textBoxes.splice(index, 1);
+            const nextTextBox = textBoxes[index - 1] ?? textBoxes[0] ?? null;
+            activeTextBoxId = nextTextBox?.id ?? null;
+            pendingTextBoxId = null;
+            if (nextTextBox) {
+                selectTextBox(nextTextBox);
+            }
+
+            return true;
+        }
+
+        // 選択中ボックスの文字を編集する
         $('#settingsBtn').on('click', () => {
             const activeTextBox = getTextBox(activeTextBoxId);
             if (activeTextBox) {
@@ -220,6 +258,7 @@ $(async function () {
             }
         });
 
+        // 空欄のまま反映された新規ボックスは後で取り除く
         $('#addBtn').on('click', () => {
             const textBox = createTextBox();
             pendingTextBoxId = textBox.id;
@@ -235,12 +274,8 @@ $(async function () {
             }
 
             const text = $('#textInput').val();
-            if (pendingTextBoxId === activeTextBox.id && !text.trim()) {
-                const index = textBoxes.findIndex(textBox => textBox.id === activeTextBox.id);
-                activeTextBox.element.remove();
-                textBoxes.splice(index, 1);
-                activeTextBoxId = textBoxes[index - 1]?.id ?? textBoxes[0]?.id ?? null;
-                pendingTextBoxId = null;
+            if (!text.trim()) {
+                removeTextBox(activeTextBox.id);
                 $modal.hide();
                 updateCanvas();
                 return;
@@ -262,6 +297,7 @@ $(async function () {
             document.fonts.ready.then(updateCanvas);
         });
 
+        // 削除は確認モーダルで確定してから実行する
         $('#deleteBtn').on('click', () => {
             if (getTextBox(activeTextBoxId)) {
                 $deleteConfirm.css('display', 'flex');
@@ -269,23 +305,12 @@ $(async function () {
         });
 
         $('#confirmDelete').on('click', () => {
-            const index = textBoxes.findIndex(textBox => textBox.id === activeTextBoxId);
             const activeTextBox = getTextBox(activeTextBoxId);
-            if (index === -1 || !activeTextBox) {
+            if (!activeTextBox || !removeTextBox(activeTextBox.id)) {
                 $deleteConfirm.hide();
                 return;
             }
 
-            activeTextBox.element.remove();
-            textBoxes.splice(index, 1);
-            const nextTextBox = textBoxes[index - 1] ?? textBoxes[0] ?? null;
-            activeTextBoxId = nextTextBox?.id ?? null;
-            if (nextTextBox) {
-                selectTextBox(nextTextBox);
-            }
-            if (pendingTextBoxId === activeTextBox.id) {
-                pendingTextBoxId = null;
-            }
             $deleteConfirm.hide();
             updateCanvas();
         });
@@ -312,6 +337,7 @@ $(async function () {
             document.fonts.ready.then(updateCanvas);
         });
 
+        // 背景画像と全テキストボックスを合成してPNGとして出力する
         $('#downloadBtn').on('click', function () {
             const canvas = document.createElement('canvas');
             const img = $baseImage[0];
@@ -331,6 +357,7 @@ $(async function () {
             link.click();
         });
 
+        // 画像の読み込み後に自然サイズと表示サイズを初期化する
         $baseImage.on('load', function () {
             const img = this;
             $textCanvas

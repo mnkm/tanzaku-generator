@@ -3,6 +3,7 @@ body {
     font-family: sans-serif;
 }
 
+/* 操作アイコンを画面右上に固定 */
 .main-container {
     text-align: center;
     align-items: center;
@@ -21,6 +22,7 @@ body {
     cursor: pointer;
 }
 
+/* スマホ幅ではスライダーを画面内に収める */
 .controls {
     margin: 50px auto 20px auto;
     display: flex;
@@ -45,12 +47,14 @@ body {
     display: inline-block;
 }
 
+/* 背景画像の表示サイズを基準にCanvasと選択枠を重ねる */
 #baseImage {
     max-width: 100%;
     height: auto;
     display: block;
 }
 
+/* 実際の文字を描画する透明Canvas */
 #textCanvas {
     position: absolute;
     top: 0;
@@ -61,6 +65,7 @@ body {
     pointer-events: none;
 }
 
+/* 入力・確認モーダル共通のレイアウト */
 .modal {
     position: fixed;
     top: 0;
@@ -141,6 +146,7 @@ body {
     z-index: 2;
 }
 
+/* 未選択時は背景を隠さず、選択時だけ枠とハンドルを表示 */
 .text-box {
     position: absolute;
     border: 2px solid transparent;
