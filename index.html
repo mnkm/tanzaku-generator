@@ -3,8 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>短冊文字入れツール</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +20,8 @@
     <!-- メイン画面 -->
     <div class="main-container">
         <div class="buttons">
+            <img src="img/add.png" id="addBtn" alt="追加">
+            <img src="img/delete.png" id="deleteBtn" alt="削除">
             <img src="img/settings.png" id="settingsBtn" alt="設定">
             <img src="img/download.png" id="downloadBtn" alt="ダウンロード">
         </div>
@@ -49,6 +50,7 @@
         <div class="image-area">
             <img id="baseImage" src="img/tanzaku.png" alt="背景画像">
             <canvas id="textCanvas"></canvas>
+            <div id="textBoxes" aria-label="文字の描画エリア"></div>
         </div>
     </div>
 
@@ -57,6 +59,16 @@
         <div class="modal-content">
             <textarea id="textInput" placeholder="短冊に入れる文字を入力"></textarea>
             <button id="applyText">反映</button>
+        </div>
+    </div>
+
+    <div id="deleteConfirm" class="modal">
+        <div class="modal-content confirm-content">
+            <p>現在選択しているテキストボックスを削除しますか？</p>
+            <div class="confirm-buttons">
+                <button id="confirmDelete">はい</button>
+                <button id="cancelDelete">いいえ</button>
+            </div>
         </div>
     </div>
 
