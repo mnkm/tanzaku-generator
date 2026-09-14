@@ -23,31 +23,9 @@
         <!-- 画像上のテキストボックスを操作するツールバー -->
         <div class="buttons">
             <img src="img/add.png" id="addBtn" alt="追加">
-            <img src="img/delete.png" id="deleteBtn" alt="削除">
             <img src="img/settings.png" id="settingsBtn" alt="設定">
             <img src="img/download.png" id="downloadBtn" alt="ダウンロード">
-        </div>
-
-        <!-- 選択中テキストボックスの文字設定 -->
-        <div class="controls">
-            <table>
-                <tr>
-                    <td>
-                        <label>フォントサイズ</label>
-                    </td>
-                    <td>
-                        <input type="range" id="fontSizeSlider" min="12" max="60" value="36">
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <label>行間</label>
-                    </td>
-                    <td>
-                        <input type="range" id="lineHeightSlider" min="1" max="3" step="0.1" value="1.5">
-                    </td>
-                </tr>
-            </table>
+            <img src="img/delete.png" id="deleteBtn" class="delete-action" alt="削除">
         </div>
 
         <!-- 背景画像、文字Canvas、選択用の枠を同じ座標系で重ねる -->
@@ -58,13 +36,31 @@
         </div>
     </div>
 
-    <!-- モーダル -->
-    <!-- 文字の入力・編集モーダル -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
+    <!-- 画面下部から開く操作メニュー -->
+    <div id="bottomSheet" class="bottom-sheet" aria-hidden="true">
+        <div class="bottom-sheet-backdrop" data-close-sheet></div>
+        <section class="bottom-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="bottomSheetTitle">
+            <div class="bottom-sheet-handle" aria-hidden="true"></div>
+            <div class="bottom-sheet-header">
+                <h2 id="bottomSheetTitle">文字の設定</h2>
+                <button id="closeSheet" class="sheet-close" type="button" aria-label="メニューを閉じる">×</button>
+            </div>
+            <label class="sheet-text-label" for="textInput">短冊に入れる文字</label>
             <textarea id="textInput" placeholder="短冊に入れる文字を入力"></textarea>
-            <button id="applyText">反映</button>
-        </div>
+            <button id="applyText" class="sheet-action" type="button">内容を反映</button>
+            <div class="sheet-controls">
+                <div class="sheet-control">
+                    <label for="sheetFontSizeSlider">フォントサイズ</label>
+                    <span id="sheetFontSizeValue">36</span>
+                    <input type="range" id="sheetFontSizeSlider" min="12" max="60" value="36">
+                </div>
+                <div class="sheet-control">
+                    <label for="sheetLineHeightSlider">行間</label>
+                    <span id="sheetLineHeightValue">1.5</span>
+                    <input type="range" id="sheetLineHeightSlider" min="1" max="3" step="0.1" value="1.5">
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- 選択中テキストボックスの削除確認モーダル -->
