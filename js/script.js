@@ -21,8 +21,8 @@ $(async function () {
             console.warn('Webフォントを読み込めないため、代替フォントを使用します。', error);
         }
 
-        const $modal = $('#modal');
         const $deleteConfirm = $('#deleteConfirm');
+        const $bottomSheet = $('#bottomSheet');
         const $textCanvas = $('#textCanvas');
         const $baseImage = $('#baseImage');
         const $textBoxes = $('#textBoxes');
@@ -126,6 +126,8 @@ $(async function () {
                 maxWidth,
                 Math.max(30, columns.length * lineSpacing)
             );
+
+            textBox.x = Math.max(0, (image.naturalWidth - textBox.width) / 2);
         }
 
         function drawText(ctx) {
@@ -215,12 +217,14 @@ $(async function () {
 
         function createTextBox() {
             // 新規ボックスの状態と操作用DOMを同時に作成する
+            const initialWidth = 200;
+            const imageWidth = $baseImage[0].naturalWidth;
             const textBox = {
                 id: nextTextBoxId++,
                 text: '',
-                x: 90,
+                x: imageWidth ? Math.max(0, (imageWidth - initialWidth) / 2) : 90,
                 y: 130,
-                width: 200,
+                width: initialWidth,
                 height: 700,
                 fontSize: 36,
                 lineHeight: 1.5,
@@ -234,9 +238,21 @@ $(async function () {
             return textBox;
         }
 
-        function openTextModal(text) {
-            $('#textInput').val(text);
-            $modal.css('display', 'flex');
+        function openBottomSheet() {
+            const activeTextBox = getTextBox(activeTextBoxId);
+            $('#textInput').val(activeTextBox?.text ?? '');
+            $bottomSheet.addClass('is-open').attr('aria-hidden', 'false');
+            $('#textInput').trigger('focus');
+        }
+
+        function closeBottomSheet() {
+            const pendingTextBox = getTextBox(pendingTextBoxId);
+            if (pendingTextBox && !$('#textInput').val().trim()) {
+                removeTextBox(pendingTextBox.id);
+                updateCanvas();
+            }
+
+            $bottomSheet.removeClass('is-open').attr('aria-hidden', 'true');
         }
 
         function removeTextBox(id) {
@@ -259,11 +275,42 @@ $(async function () {
             return true;
         }
 
-        // 選択中ボックスの文字を編集する
+        // 設定アイコンから下部メニューを開く
         $('#settingsBtn').on('click', () => {
+            if (!textBoxes.length) {
+                return;
+            }
+
+            openBottomSheet();
+        });
+
+        $('#closeSheet, [data-close-sheet]').on('click', closeBottomSheet);
+
+        $('#sheetFontSizeSlider').on('input', function () {
             const activeTextBox = getTextBox(activeTextBoxId);
-            if (activeTextBox) {
-                openTextModal(activeTextBox.text);
+            if (!activeTextBox) {
+                return;
+            }
+
+            activeTextBox.fontSize = parseInt(this.value);
+            document.fonts.ready.then(updateCanvas);
+            $('#sheetFontSizeValue').text(this.value);
+        });
+
+        $('#sheetLineHeightSlider').on('input', function () {
+            const activeTextBox = getTextBox(activeTextBoxId);
+            if (!activeTextBox) {
+                return;
+            }
+
+            activeTextBox.lineHeight = parseFloat(this.value);
+            document.fonts.ready.then(updateCanvas);
+            $('#sheetLineHeightValue').text(this.value);
+        });
+
+        $(document).on('keydown', event => {
+            if (event.key === 'Escape') {
+                closeBottomSheet();
             }
         });
 
@@ -271,7 +318,7 @@ $(async function () {
         $('#addBtn').on('click', () => {
             const textBox = createTextBox();
             pendingTextBoxId = textBox.id;
-            openTextModal(textBox.text);
+            openBottomSheet();
             updateCanvas();
         });
 
@@ -281,7 +328,7 @@ $(async function () {
 
             if (!activeTextBox) {
                 if (!text.trim()) {
-                    $modal.hide();
+                    closeBottomSheet();
                     return;
                 }
 
@@ -291,13 +338,13 @@ $(async function () {
                     resizeTextBoxToText(newTextBox);
                     updateCanvas();
                 });
-                $modal.hide();
+                closeBottomSheet();
                 return;
             }
 
             if (!text.trim()) {
                 removeTextBox(activeTextBox.id);
-                $modal.hide();
+                closeBottomSheet();
                 updateCanvas();
                 return;
             }
@@ -305,7 +352,7 @@ $(async function () {
             activeTextBox.text = text;
             const isPendingTextBox = pendingTextBoxId === activeTextBox.id;
             pendingTextBoxId = null;
-            $modal.hide();
+            closeBottomSheet();
 
             if (isPendingTextBox) {
                 document.fonts.ready.then(() => {
@@ -337,26 +384,6 @@ $(async function () {
         });
 
         $('#cancelDelete').on('click', () => $deleteConfirm.hide());
-
-        $('#fontSizeSlider').on('input', function () {
-            const activeTextBox = getTextBox(activeTextBoxId);
-            if (!activeTextBox) {
-                return;
-            }
-
-            activeTextBox.fontSize = parseInt(this.value);
-            document.fonts.ready.then(updateCanvas);
-        });
-
-        $('#lineHeightSlider').on('input', function () {
-            const activeTextBox = getTextBox(activeTextBoxId);
-            if (!activeTextBox) {
-                return;
-            }
-
-            activeTextBox.lineHeight = parseFloat(this.value);
-            document.fonts.ready.then(updateCanvas);
-        });
 
         // 背景画像と全テキストボックスを合成してPNGとして出力する
         $('#downloadBtn').on('click', function () {
@@ -395,5 +422,6 @@ $(async function () {
             updateCanvas();
         }
 
-        $modal.css('display', 'flex');
+        // 初期表示時は追加ボタンと同じ処理でメニューを開く
+        $('#addBtn').trigger('click');
 });
