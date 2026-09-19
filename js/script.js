@@ -94,16 +94,26 @@ $(async function () {
         }
 
         function getWrappedColumns(textBox, font) {
-            const image = $baseImage[0];
-            const availableHeight = Math.max(1, Math.min(
-                textBox.height,
-                image.naturalHeight - textBox.y
-            ));
+            // 折り返しはボックス自身の高さのみで決める（表示位置による揺れを避ける）
+            const availableHeight = Math.max(1, textBox.height);
             const columns = textBox.text
                 .split('\n')
                 .flatMap(text => wrapVerticalText(text, font, availableHeight));
             // 列を切り捨てず、入力文字をすべて描画する
             return columns;
+        }
+
+        function getRenderedColumns(textBox, font) {
+            // text/font/heightが同じ間は再計測・再描画を省略する
+            const cacheKey = textBox.text + ' ' + font + ' ' + textBox.height;
+            if (textBox._columnsCache && textBox._columnsCache.key === cacheKey) {
+                return textBox._columnsCache.textObjs;
+            }
+
+            const textObjs = getWrappedColumns(textBox, font)
+                .map(text => createVerticalTextCanvas(text, font));
+            textBox._columnsCache = { key: cacheKey, textObjs };
+            return textObjs;
         }
 
         function resizeTextBoxToText(textBox) {
@@ -141,8 +151,7 @@ $(async function () {
                 ctx.rect(textBox.x, textBox.y, textBox.width, textBox.height);
                 ctx.clip();
 
-                getWrappedColumns(textBox, font).forEach(function (text, index) {
-                    const textObj = createVerticalTextCanvas(text, font);
+                getRenderedColumns(textBox, font).forEach(function (textObj, index) {
                     const lineOffset = textBox.fontSize * textBox.lineHeight * index;
                     ctx.drawImage(
                         textObj,
@@ -171,10 +180,17 @@ $(async function () {
             syncAllTextBoxes();
         }
 
+        function syncSheetControls(textBox) {
+            // 設定パネルのスライダーと数値表示を選択中ボックスの値に合わせる
+            $('#sheetFontSizeSlider').val(textBox.fontSize);
+            $('#sheetFontSizeValue').text(textBox.fontSize);
+            $('#sheetLineHeightSlider').val(textBox.lineHeight);
+            $('#sheetLineHeightValue').text(textBox.lineHeight);
+        }
+
         function selectTextBox(textBox) {
             activeTextBoxId = textBox.id;
-            $('#fontSizeSlider').val(textBox.fontSize);
-            $('#lineHeightSlider').val(textBox.lineHeight);
+            syncSheetControls(textBox);
             syncAllTextBoxes();
         }
 
@@ -263,6 +279,7 @@ $(async function () {
                 return false;
             }
 
+            interact(textBox.element[0]).unset();
             textBox.element.remove();
             textBoxes.splice(index, 1);
             const nextTextBox = textBoxes[index - 1] ?? textBoxes[0] ?? null;
