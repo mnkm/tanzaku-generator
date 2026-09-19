@@ -57,3 +57,7 @@ npx serve .
 ## デプロイ
 
 GitHub Actionsにより、`main` ブランチの内容がGitHub Pagesへ自動デプロイされます。
+
+## ライセンス
+
+このリポジトリは [MIT License](LICENSE) のもとで公開されています。
