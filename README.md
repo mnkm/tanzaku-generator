@@ -4,7 +4,7 @@
 
 ## デモ
 
-https://mnkm.github.io/tanzaku-generator/
+https://mnkm.page/tanzaku-generator/
 
 ## 主な機能
 
