@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'none';
-                 script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net;
-                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 script-src 'self' https://static.cloudflareinsights.com;
+                 style-src 'self' https://fonts.googleapis.com;
                  font-src https://fonts.gstatic.com;
-                 img-src 'self' data:;
-                 connect-src https://fonts.googleapis.com https://fonts.gstatic.com;
+                 img-src 'self';
+                 connect-src https://fonts.googleapis.com https://fonts.gstatic.com https://cloudflareinsights.com;
                  base-uri 'none';
                  form-action 'none';">
     <title>短冊文字入れツール</title>
@@ -19,17 +19,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Zen+Kurenaido&display=swap" rel="stylesheet">
-    <!-- UI操作、ドラッグ、縦書き描画に使用する外部ライブラリ（バージョン固定 + SRIで改ざん検知） -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.28/dist/interact.min.js"
-        integrity="sha384-M8D+RMAiR0totYNPoldHamQ91OX9eGv5aR15538+pfeV/zsOqt4HYh2nyC8RPZUR"
-        crossorigin="anonymous"></script>
-    <!-- 縦書き描画ライブラリ。jsDelivrの自動生成minifyはSRIと非互換のため未minifyの配布ファイルを使用 -->
-    <script src="https://cdn.jsdelivr.net/npm/@mogamoga1024/vertical-text-canvas@1.0.11/vertical_text_canvas.js"
-        integrity="sha384-tVsbinCt+CYQuf5WN0ulJWiXZ9g/WEtNn6/vtNH6ar6CJ+236DW776OH9ExMARqj"
-        crossorigin="anonymous"></script>
+    <!-- UI操作、ドラッグ、縦書き描画に使用するライブラリ（CDNを使わずjs/vendorに同梱。版とハッシュはREADME参照） -->
+    <script src="./js/vendor/jquery-3.7.1.min.js"></script>
+    <script src="./js/vendor/interact.min.js"></script>
+    <script src="./js/vendor/vertical_text_canvas.js"></script>
 </head>
 
 <body>
@@ -62,7 +55,7 @@
                 <button id="closeSheet" class="sheet-close" type="button" aria-label="メニューを閉じる">×</button>
             </div>
             <label class="sheet-text-label" for="textInput">短冊に入れる文字</label>
-            <textarea id="textInput" placeholder="短冊に入れる文字を入力"></textarea>
+            <textarea id="textInput" maxlength="500" placeholder="短冊に入れる文字を入力"></textarea>
             <button id="applyText" class="sheet-action" type="button">内容を反映</button>
             <div class="sheet-controls">
                 <div class="sheet-control">

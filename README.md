@@ -1,6 +1,6 @@
 # 短冊文字入れツール (tanzaku-generator)
 
-七夕の短冊画像に、ブラウザ上でドラッグ＆リサイズできるテキストボックスを使って縦書きメッセージを入れ、画像として合成・ダウンロードできる静的Webアプリです。サーバーサイドの処理を持たず、GitHub Pagesでそのまま公開できます。
+七夕の短冊画像に、ブラウザ上でドラッグ＆リサイズできるテキストボックスを使って縦書きメッセージを入れ、画像として合成・ダウンロードできる静的Webアプリです。サーバーサイドの処理を持たず、静的ホスティングでそのまま公開できます。
 
 ## デモ
 
@@ -32,17 +32,35 @@ https://mnkm.page/tanzaku-generator/
 - @mogamoga1024/vertical-text-canvas 1.0.11 — 縦書きテキストのCanvas描画
 - Google Fonts（Zen Kurenaido） — 縦書きに合う和風フォント
 
-外部スクリプトはすべてバージョンを固定した上でSubresource Integrity (SRI) を付与し、`index.html` にContent-Security-Policyを設定して、許可したホスト以外からのスクリプト実行やスタイル注入を制限しています。
+## セキュリティ
+
+- JavaScriptライブラリはCDNから読み込まず、`js/vendor/` に同梱しています。
+- `index.html` の `<meta>` タグでContent-Security-Policyを設定し、スクリプトの実行元を同一オリジンとCloudflare Web Analyticsのビーコンに、スタイルの読み込み元を同一オリジンとGoogle Fontsに限定しています。インラインのスクリプトとスタイルは許可していません。
+- `<meta>` によるCSPのため、`frame-ancestors` などHTTPヘッダーでのみ有効な指令は含みません。
+- 公開サイトではアクセス解析にCloudflare Web Analyticsを使用しています。
+
+### 同梱ライブラリ
+
+上流の配布ファイルをそのまま（バイト同一で）配置しています。更新時は取得元から取り直し、sha384を照合してください。
+
+| ファイル | バージョン | 取得元 | sha384 |
+|---|---|---|---|
+| `jquery-3.7.1.min.js` | 3.7.1 | https://code.jquery.com/jquery-3.7.1.min.js | `1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs` |
+| `interact.min.js` | 1.10.28 | https://cdn.jsdelivr.net/npm/interactjs@1.10.28/dist/interact.min.js | `M8D+RMAiR0totYNPoldHamQ91OX9eGv5aR15538+pfeV/zsOqt4HYh2nyC8RPZUR` |
+| `vertical_text_canvas.js` | 1.0.11 | https://cdn.jsdelivr.net/npm/@mogamoga1024/vertical-text-canvas@1.0.11/vertical_text_canvas.js | `tVsbinCt+CYQuf5WN0ulJWiXZ9g/WEtNn6/vtNH6ar6CJ+236DW776OH9ExMARqj` |
+
+ライセンスは、jQueryとinteract.jsがMIT、vertical-text-canvasがMIT OR WTFPLです。
 
 ## ディレクトリ構成
 
 ```
 .
-├── index.html      # 画面構造、外部ライブラリの読み込み、CSP設定
+├── index.html      # 画面構造、ライブラリの読み込み、CSP設定
 ├── css/
 │   └── style.css   # レイアウト、ボトムシート、テキストボックスの見た目
 ├── js/
-│   └── script.js   # テキストボックスの状態管理、縦書き描画、画像出力処理
+│   ├── script.js   # テキストボックスの状態管理、縦書き描画、画像出力処理
+│   └── vendor/     # 同梱ライブラリ（上流の配布ファイルそのまま）
 └── img/            # アイコン・背景画像などの静的アセット
 ```
 
@@ -56,4 +74,4 @@ npx serve .
 
 ## デプロイ
 
-GitHub Actionsにより、`main` ブランチの内容がGitHub Pagesへ自動デプロイされます。
+Cloudflare Pagesで配信しています。
