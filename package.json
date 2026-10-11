@@ -1,0 +1,14 @@
+{
+  "name": "tanzaku-generator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "vendor": "node scripts/copy-vendor.mjs",
+    "prepare": "npm run vendor"
+  },
+  "dependencies": {
+    "@mogamoga1024/vertical-text-canvas": "1.0.11",
+    "interactjs": "1.10.28",
+    "jquery": "3.7.1"
+  }
+}

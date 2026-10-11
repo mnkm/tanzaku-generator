@@ -1,6 +1,6 @@
 # 短冊文字入れツール (tanzaku-generator)
 
-七夕の短冊画像に、ブラウザ上でドラッグ＆リサイズできるテキストボックスを使って縦書きメッセージを入れ、画像として合成・ダウンロードできる静的Webアプリです。サーバーサイドの処理を持たず、静的ホスティングでそのまま公開できます。
+七夕の短冊画像に、ブラウザ上でドラッグ＆リサイズできるテキストボックスを使って縦書きメッセージを入れ、画像として合成・ダウンロードできる静的Webアプリです。サーバーサイドの処理を持たず、静的ホスティングで公開できます。
 
 ## デモ
 
@@ -26,7 +26,7 @@ https://mnkm.page/tanzaku-generator/
 
 ## 技術スタック
 
-- 素のHTML / CSS / JavaScript（ビルド不要・フレームワーク不使用）
+- 素のHTML / CSS / JavaScript（フレームワーク不使用。ビルドはライブラリのコピーのみ）
 - jQuery 3.7.1 — DOM操作・イベントハンドリング
 - interact.js 1.10.28 — テキストボックスのドラッグ移動・リサイズ
 - @mogamoga1024/vertical-text-canvas 1.0.11 — 縦書きテキストのCanvas描画
@@ -34,20 +34,21 @@ https://mnkm.page/tanzaku-generator/
 
 ## セキュリティ
 
-- JavaScriptライブラリはCDNから読み込まず、`js/vendor/` に同梱しています。
+- JavaScriptライブラリはCDNから読み込まず、npmで管理しています。版は `package.json` と `package-lock.json` で固定し、公開時に `js/vendor/` へコピーして同一オリジンから配信します。
+- ライブラリの脆弱性は、GitHubのDependabotで検知します。
 - `index.html` の `<meta>` タグでContent-Security-Policyを設定し、スクリプトの実行元を同一オリジンとCloudflare Web Analyticsのビーコンに、スタイルの読み込み元を同一オリジンとGoogle Fontsに限定しています。インラインのスクリプトとスタイルは許可していません。
 - 他サイトへの埋め込み（クリックジャッキング）を防ぐため、Cloudflare Pagesの `_headers` で `X-Frame-Options: DENY` と `Content-Security-Policy: frame-ancestors 'none'` をHTTPヘッダーとして返しています。`frame-ancestors` は `<meta>` では効かないため、ヘッダー側で指定しています。
 - 公開サイトではアクセス解析にCloudflare Web Analyticsを使用しています。
 
-### 同梱ライブラリ
+### ライブラリ
 
-上流の配布ファイルをそのまま（バイト同一で）配置しています。更新時は取得元から取り直し、sha384を照合してください。
+npmのパッケージに含まれる配布ファイルを、`scripts/copy-vendor.mjs` がそのまま `js/vendor/` へコピーします。`js/vendor/` はリポジトリに含めません。更新するときは `package.json` の版を変えて `npm install` を実行します。
 
-| ファイル | バージョン | 取得元 | sha384 |
-|---|---|---|---|
-| `jquery-3.7.1.min.js` | 3.7.1 | https://code.jquery.com/jquery-3.7.1.min.js | `1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs` |
-| `interact.min.js` | 1.10.28 | https://cdn.jsdelivr.net/npm/interactjs@1.10.28/dist/interact.min.js | `M8D+RMAiR0totYNPoldHamQ91OX9eGv5aR15538+pfeV/zsOqt4HYh2nyC8RPZUR` |
-| `vertical_text_canvas.js` | 1.0.11 | https://cdn.jsdelivr.net/npm/@mogamoga1024/vertical-text-canvas@1.0.11/vertical_text_canvas.js | `tVsbinCt+CYQuf5WN0ulJWiXZ9g/WEtNn6/vtNH6ar6CJ+236DW776OH9ExMARqj` |
+| npmのパッケージ | バージョン | コピーされるファイル |
+|---|---|---|
+| `jquery` | 3.7.1 | `jquery.min.js` |
+| `interactjs` | 1.10.28 | `interact.min.js` |
+| `@mogamoga1024/vertical-text-canvas` | 1.0.11 | `vertical_text_canvas.js` |
 
 ライセンスは、jQueryとinteract.jsがMIT、vertical-text-canvasがMIT OR WTFPLです。
 
@@ -61,22 +62,26 @@ faviconとボタンのアイコンは [MingCute Icons](https://github.com/mingcu
 .
 ├── _headers        # Cloudflare Pagesが返すHTTPレスポンスヘッダーの設定
 ├── index.html      # 画面構造、ライブラリの読み込み、CSP設定
+├── package.json    # ライブラリの版の管理（package-lock.json とあわせて固定）
+├── scripts/
+│   └── copy-vendor.mjs  # ライブラリを node_modules から js/vendor/ へコピーする
 ├── css/
 │   └── style.css   # レイアウト、ボトムシート、テキストボックスの見た目
 ├── js/
 │   ├── script.js   # テキストボックスの状態管理、縦書き描画、画像出力処理
-│   └── vendor/     # 同梱ライブラリ（上流の配布ファイルそのまま）
+│   └── vendor/     # npmからコピーされるライブラリ（リポジトリには含めない）
 └── img/            # アイコン・背景画像などの静的アセット
 ```
 
 ## ローカルでの動作確認
 
-ビルド手順は不要です。任意の静的Webサーバーで配信して `index.html` を開いてください。
+初回と、ライブラリを更新したときに `npm install` を実行します（`js/vendor/` へのコピーまで行われます）。そのあと、任意の静的Webサーバーで配信して `index.html` を開いてください。
 
 ```bash
+npm install
 npx serve .
 ```
 
 ## デプロイ
 
-Cloudflare Pagesで配信しています。
+Cloudflare Pagesで配信しています。ビルドコマンドは `npm ci --ignore-scripts && npm run vendor` です。
