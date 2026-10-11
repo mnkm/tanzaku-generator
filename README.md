@@ -51,6 +51,10 @@ https://mnkm.page/tanzaku-generator/
 
 ライセンスは、jQueryとinteract.jsがMIT、vertical-text-canvasがMIT OR WTFPLです。
 
+### アイコン
+
+faviconとボタンのアイコンは [MingCute Icons](https://github.com/mingcute-design/mingcute-icons)（Apache License 2.0）です。対象のファイルとライセンス全文は `THIRD_PARTY_NOTICES.md` にあります。
+
 ## ディレクトリ構成
 
 ```
