@@ -9,6 +9,7 @@
 | `img/settings.png` | 設定ボタン |  |
 | `img/download.png` | ダウンロードボタン |  |
 | `img/delete.png` | 削除ボタン |  |
+| `img/information.svg` | サイトの説明を開くボタン |  |
 
 ## Apache License 2.0
 
