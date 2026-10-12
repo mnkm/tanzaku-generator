@@ -14,6 +14,26 @@
                  base-uri 'none';
                  form-action 'none';">
     <title>短冊文字入れツール</title>
+    <meta name="description" content="PROJECT NEBULA（ぷろねぶ）所属のVTuber 碓氷ゆら考案企画「ゆら姫に願いを」で紹介する短冊の作成を支援するツール">
+    <link rel="canonical" href="https://mnkm.page/tanzaku-generator/">
+    <!-- 構造化データ（検索エンジン向けのサイト情報。実行されないデータなのでCSPの対象外） -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "短冊文字入れツール",
+        "url": "https://mnkm.page/tanzaku-generator/",
+        "inLanguage": "ja",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Any",
+        "isAccessibleForFree": true,
+        "description": "PROJECT NEBULA（ぷろねぶ）所属のVTuber 碓氷ゆら考案企画「ゆら姫に願いを」で紹介する短冊の作成を支援するツール",
+        "about": [
+            { "@type": "Person", "name": "碓氷ゆら" },
+            { "@type": "Organization", "name": "PROJECT NEBULA", "alternateName": "ぷろねぶ" }
+        ]
+    }
+    </script>
     <link rel="icon" type="image/svg+xml" href="./img/favicon.svg">
     <link rel="stylesheet" href="./css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,6 +47,15 @@
 
 <body>
 
+    <!-- 検索エンジンと読み上げ向けの見出し（画面には表示しない） -->
+    <h1 class="visually-hidden">短冊文字入れツール</h1>
+
+    <!-- サイトの説明。画面右上のボタンで開閉し、閉じている間はレイアウトに影響しない -->
+    <details class="site-about">
+        <summary aria-label="このサイトについて"><img src="./img/information.svg" alt=""></summary>
+        <p>PROJECT NEBULA（ぷろねぶ）所属のVTuber 碓氷ゆら考案企画「ゆら姫に願いを」で紹介する短冊の作成を支援するツールです。</p>
+    </details>
+
     <!-- メイン画面 -->
     <div class="main-container">
         <!-- 画像上のテキストボックスを操作するツールバー -->
@@ -39,7 +68,7 @@
 
         <!-- 背景画像、文字Canvas、選択用の枠を同じ座標系で重ねる -->
         <div class="image-area">
-            <img id="baseImage" src="./img/tanzaku.png" alt="背景画像">
+            <img id="baseImage" src="./img/tanzaku.png" alt="ゆら姫に願いを 短冊テンプレート">
             <canvas id="textCanvas"></canvas>
             <div id="textBoxes" aria-label="文字の描画エリア"></div>
         </div>
