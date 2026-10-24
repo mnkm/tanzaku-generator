@@ -30,13 +30,13 @@ https://mnkm.page/tanzaku-generator/
 - jQuery 3.7.1 — DOM操作・イベントハンドリング
 - interact.js 1.10.28 — テキストボックスのドラッグ移動・リサイズ
 - @mogamoga1024/vertical-text-canvas 1.0.11 — 縦書きテキストのCanvas描画
-- Google Fonts（Zen Kurenaido） — 縦書きに合う和風フォント
+- Google Fonts（Zen Kurenaido） — 縦書きに合う和風フォント。文字の範囲ごとに分かれたファイルのうち、短冊に入れた文字の分だけを読み込む（Canvasに描く前に `document.fonts.load` で読み込む）
 
 ## セキュリティ
 
 - JavaScriptライブラリはCDNから読み込まず、npmで管理しています。版は `package.json` と `package-lock.json` で固定し、公開時に `js/vendor/` へコピーして同一オリジンから配信します。
 - ライブラリの脆弱性は、GitHubのDependabotで検知します。
-- `index.html` の `<meta>` タグでContent-Security-Policyを設定し、スクリプトの実行元を同一オリジンとCloudflare Web Analyticsのビーコンに、スタイルの読み込み元を同一オリジンとGoogle Fontsに限定しています。インラインのスクリプトとスタイルは許可していません。
+- `index.html` の `<meta>` タグでContent-Security-Policyを設定し、スクリプトの実行元を同一オリジンとCloudflare Web Analyticsのビーコンに、スタイルの読み込み元を同一オリジンとGoogle Fontsに、通信先を同一オリジン（mnkm.page の計測の送信先 `/cdn-cgi/rum`）とCloudflare Web Analyticsに限定しています。インラインのスクリプトとスタイルは許可していません。
 - 他サイトへの埋め込み（クリックジャッキング）を防ぐため、Cloudflare Pagesの `_headers` で `X-Frame-Options: DENY` と `Content-Security-Policy: frame-ancestors 'none'` をHTTPヘッダーとして返しています。`frame-ancestors` は `<meta>` では効かないため、ヘッダー側で指定しています。
 - 公開サイトではアクセス解析にCloudflare Web Analyticsを使用しています。
 
