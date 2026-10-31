@@ -1,81 +1,59 @@
 # 短冊文字入れツール (tanzaku-generator)
 
-七夕の短冊画像に、ブラウザ上でドラッグ＆リサイズできるテキストボックスを使って縦書きメッセージを入れ、画像として合成・ダウンロードできる静的Webアプリです。サーバーサイドの処理を持たず、静的ホスティングで公開できます。
+七夕の短冊の画像に縦書きの文字を入れ、PNG の画像として保存できる Web アプリです。ブラウザだけで動き、サーバーでの処理はありません。
 
-## デモ
-
-https://mnkm.page/tanzaku-generator/
-
-## 主な機能
-
-- 短冊の背景画像上に、自由に配置できるテキストボックスを追加・削除
-- ドラッグによる移動、ハンドルによるリサイズ（[interact.js](https://interactjs.io/)）
-- 縦書きでの自動折り返し描画（[vertical-text-canvas](https://www.npmjs.com/package/@mogamoga1024/vertical-text-canvas)）。ボックスからはみ出す文字も入力内容としては保持したまま、見た目だけをボックス内にクリップ表示
-- 画面下部から開く「ボトムシート」で、テキスト・フォントサイズ・行間を設定
-- 完成した画像をPNGとしてダウンロード
+公開 URL: https://mnkm.page/tanzaku-generator/
 
 ## 使い方
 
-1. 上部ツールバーの追加ボタン（＋）でテキストボックスを追加
-2. 下部シートに文字を入力し「内容を反映」をタップ
-3. テキストボックスをドラッグして位置を調整し、右下のハンドルでサイズを調整
-4. 設定ボタンから、選択中のボックスのフォントサイズ・行間を再調整
-5. ダウンロードボタンで、背景画像とテキストを合成したPNGを保存
+1. 上のツールバーの「+」ボタンで、テキストボックスを追加します。
+2. 下のシートに文字を入力し、「内容を反映」を押します。
+3. テキストボックスをドラッグして位置を、右下のハンドルで大きさを変えます。
+4. 設定ボタンで、選んでいるボックスの文字の大きさと行間を変えます。
+5. ダウンロードボタンで、背景と文字を合わせた PNG を保存します。
 
-不要になったテキストボックスは、選択した状態で削除ボタンから確認の上で削除できます。
+テキストボックスは選んだ状態で削除ボタンを押し、確認のあとで削除できます。ボックスに収まらない文字は入力した内容としては残したまま、ボックスの外の部分を表示しません。
 
-## 技術スタック
+## 構成
 
-- 素のHTML / CSS / JavaScript（フレームワーク不使用。ビルドはライブラリのコピーのみ）
-- jQuery 3.7.1 — DOM操作・イベントハンドリング
-- interact.js 1.10.28 — テキストボックスのドラッグ移動・リサイズ
-- @mogamoga1024/vertical-text-canvas 1.0.11 — 縦書きテキストのCanvas描画
-- Google Fonts（Zen Kurenaido） — 縦書きに合う和風フォント。文字の範囲ごとに分かれたファイルのうち、短冊に入れた文字の分だけを読み込む（Canvasに描く前に `document.fonts.load` で読み込む）
+HTML・CSS・JavaScript だけで作っており、フレームワークは使いません。
 
-## セキュリティ
+| ライブラリ | 版 | 用途 | ライセンス |
+|---|---|---|---|
+| jQuery | 3.7.1 | DOM の操作とイベントの処理 | MIT |
+| [interact.js](https://interactjs.io/) | 1.10.28 | テキストボックスの移動と大きさの変更 | MIT |
+| [@mogamoga1024/vertical-text-canvas](https://www.npmjs.com/package/@mogamoga1024/vertical-text-canvas) | 1.0.11 | Canvas への縦書きの描画 | MIT OR WTFPL |
 
-- JavaScriptライブラリはCDNから読み込まず、npmで管理しています。版は `package.json` と `package-lock.json` で固定し、公開時に `js/vendor/` へコピーして同一オリジンから配信します。
-- ライブラリの脆弱性は、GitHubのDependabotで検知します。
-- `index.html` の `<meta>` タグでContent-Security-Policyを設定し、スクリプトの実行元を同一オリジンとCloudflare Web Analyticsのビーコンに、スタイルの読み込み元を同一オリジンとGoogle Fontsに、通信先を同一オリジン（mnkm.page の計測の送信先 `/cdn-cgi/rum`）とCloudflare Web Analyticsに限定しています。インラインのスクリプトとスタイルは許可していません。
-- 他サイトへの埋め込み（クリックジャッキング）を防ぐため、Cloudflare Pagesの `_headers` で `X-Frame-Options: DENY` と `Content-Security-Policy: frame-ancestors 'none'` をHTTPヘッダーとして返しています。`frame-ancestors` は `<meta>` では効かないため、ヘッダー側で指定しています。
-- 公開サイトではアクセス解析にCloudflare Web Analyticsを使用しています。
+ライブラリは npm で管理し、版を `package.json` と `package-lock.json` で固定しています。`scripts/copy-vendor.mjs` が配布ファイルを `js/vendor/` にコピーします(`js/vendor/` はリポジトリに含めません)。更新するときは、`package.json` の版を変えて `npm install` を実行します。
 
-### ライブラリ
+フォントは Google Fonts の Zen Kurenaido です。短冊に入れた文字を含むファイルだけを、Canvas に描く前に `document.fonts.load` で読み込みます。
 
-npmのパッケージに含まれる配布ファイルを、`scripts/copy-vendor.mjs` がそのまま `js/vendor/` へコピーします。`js/vendor/` はリポジトリに含めません。更新するときは `package.json` の版を変えて `npm install` を実行します。
-
-| npmのパッケージ | バージョン | コピーされるファイル |
-|---|---|---|
-| `jquery` | 3.7.1 | `jquery.min.js` |
-| `interactjs` | 1.10.28 | `interact.min.js` |
-| `@mogamoga1024/vertical-text-canvas` | 1.0.11 | `vertical_text_canvas.js` |
-
-ライセンスは、jQueryとinteract.jsがMIT、vertical-text-canvasがMIT OR WTFPLです。
-
-### アイコン
-
-faviconとボタンのアイコンは [MingCute Icons](https://github.com/mingcute-design/mingcute-icons)（Apache License 2.0）です。対象のファイルとライセンス全文は `THIRD_PARTY_NOTICES.md` にあります。
-
-## ディレクトリ構成
+アイコンは [MingCute Icons](https://github.com/mingcute-design/mingcute-icons)(Apache License 2.0)です。対象のファイルとライセンスの全文は `THIRD_PARTY_NOTICES.md` にあります。
 
 ```
 .
-├── _headers        # Cloudflare Pagesが返すHTTPレスポンスヘッダーの設定
-├── index.html      # 画面構造、ライブラリの読み込み、CSP設定
-├── package.json    # ライブラリの版の管理（package-lock.json とあわせて固定）
+├── _headers        # Cloudflare Pages が返す HTTP ヘッダーの設定
+├── index.html      # 画面の構造、ライブラリの読み込み、CSP の設定
+├── package.json    # ライブラリの版の管理
 ├── scripts/
 │   └── copy-vendor.mjs  # ライブラリを node_modules から js/vendor/ へコピーする
-├── css/
-│   └── style.css   # レイアウト、ボトムシート、テキストボックスの見た目
+├── css/style.css   # 画面のスタイル
 ├── js/
-│   ├── script.js   # テキストボックスの状態管理、縦書き描画、画像出力処理
-│   └── vendor/     # npmからコピーされるライブラリ（リポジトリには含めない）
-└── img/            # アイコン・背景画像などの静的アセット
+│   ├── script.js   # テキストボックスの管理、縦書きの描画、画像の書き出し
+│   └── vendor/     # npm からコピーしたライブラリ(リポジトリには含めない)
+└── img/            # アイコンと背景の画像
 ```
+
+## セキュリティ
+
+- ライブラリは CDN から読み込まず、同じオリジンから配信します。脆弱性は GitHub の Dependabot で検知します。
+- `index.html` の Content-Security-Policy で、スクリプトの読み込み元を同じオリジンと Cloudflare Web Analytics に、スタイルの読み込み元を同じオリジンと Google Fonts に、通信先を同じオリジン(アクセス解析の送信先 `/cdn-cgi/rum`)と Cloudflare Web Analytics に限っています。インラインのスクリプトとスタイルは許可していません。
+- 他のサイトの中に埋め込まれないよう(クリックジャッキングの対策)、`_headers` で `X-Frame-Options: DENY` と `Content-Security-Policy: frame-ancestors 'none'` を返します。`frame-ancestors` は `<meta>` では指定できないので、HTTP ヘッダーで指定しています。
+- 公開サイトのアクセス解析には Cloudflare Web Analytics を使っています。
 
 ## ローカルでの動作確認
 
-初回と、ライブラリを更新したときに `npm install` を実行します（`js/vendor/` へのコピーまで行われます）。そのあと、任意の静的Webサーバーで配信して `index.html` を開いてください。
+最初と、ライブラリを更新したときに `npm install` を実行します。そのあと、静的なファイルを配信するサーバーで `index.html` を開きます。
 
 ```bash
 npm install
@@ -84,4 +62,4 @@ npx serve .
 
 ## デプロイ
 
-Cloudflare Pagesで配信しています。ビルドコマンドは `npm ci --ignore-scripts && npm run vendor` です。
+Cloudflare Pages で配信しています。ビルドコマンドは `npm ci --ignore-scripts && npm run vendor` です。
