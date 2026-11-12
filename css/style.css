@@ -43,7 +43,7 @@ body {
     display: none;
 }
 
-.site-about p {
+.site-about-body {
     width: min(300px, calc(100vw - 20px));
     margin: 8px 0 0;
     padding: 12px 14px;
@@ -51,9 +51,26 @@ body {
     border-radius: 12px;
     background: #fffdf8;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
     font-size: 13px;
     line-height: 1.7;
     text-align: left;
+}
+
+.site-about-body p {
+    margin: 0 0 10px;
+}
+
+.site-about-replay {
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: #eee9e0;
+    color: #332e29;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
 }
 
 /* 操作アイコンを画面上部中央に固定 */
@@ -75,6 +92,7 @@ body {
 
 .buttons img {
     width: 40px;
+    height: auto;
     cursor: pointer;
 }
 
@@ -409,5 +427,162 @@ body {
 
     .bottom-sheet.is-open .bottom-sheet-panel {
         transform: translate(50%, 0);
+    }
+}
+/* 使い方の案内。dialog を画面全体の透明な箱にし、穴の枠の影で周りを暗くする */
+.tutorial {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: hidden;
+}
+
+.tutorial:not([open]) {
+    display: none;
+}
+
+html.tutorial-open {
+    overflow: hidden;
+}
+
+.tutorial::backdrop {
+    background: transparent;
+}
+
+.tutorial-spot {
+    position: absolute;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    transition: left 0.25s, top 0.25s, width 0.25s, height 0.25s;
+}
+
+.tutorial-bubble {
+    --arrow-x: 50%;
+    position: absolute;
+    width: min(320px, calc(100vw - 32px));
+    padding: 16px;
+    border-radius: 12px;
+    background: #fffdf8;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+    text-align: left;
+}
+
+/* 低い画面では、吹き出しの中身をスクロールして「次へ」まで届くようにする(三角は外に出す) */
+.tutorial-bubble-body {
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+}
+
+/* 吹き出しから対象のボタンを指す三角 */
+.tutorial-bubble::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: var(--arrow-x);
+    border: 8px solid transparent;
+    border-top: 0;
+    border-bottom-color: #fffdf8;
+    transform: translateX(-50%);
+}
+
+.tutorial-bubble.is-above::before {
+    top: auto;
+    bottom: -8px;
+    border-top: 8px solid #fffdf8;
+    border-bottom: 0;
+}
+
+.tutorial-progress {
+    margin: 0 0 4px;
+    color: #5f5a52;
+    font-size: 12px;
+}
+
+.tutorial-title {
+    margin: 0 0 8px;
+    font-size: 17px;
+    outline: none;
+}
+
+.tutorial-text {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.tutorial-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.tutorial-button {
+    min-width: 96px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #eee9e0;
+    color: #332e29;
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.tutorial-button.is-primary {
+    background: #007AFF;
+    color: #fff;
+}
+
+.tutorial-actions .is-primary {
+    margin-left: auto;
+}
+
+/* 枠の操作の案内。画面を暗くせず、下に固定して出す */
+.box-hint {
+    position: fixed;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: 12px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #fffdf8;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.box-hint[hidden] {
+    display: none;
+}
+
+.box-hint p {
+    margin: 0;
+}
+
+.box-hint .tutorial-button {
+    flex: none;
+    min-width: 64px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tutorial-spot {
+        transition: none;
     }
 }

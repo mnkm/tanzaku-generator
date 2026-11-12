@@ -52,17 +52,20 @@
     <!-- サイトの説明。画面右上のボタンで開閉し、閉じている間はレイアウトに影響しない -->
     <details class="site-about">
         <summary aria-label="このサイトについて"><img src="./img/information.svg" alt=""></summary>
-        <p>PROJECT NEBULA（ぷろねぶ）所属のVTuber 碓氷ゆら考案企画「ゆら姫に願いを」で紹介する短冊の作成を支援するツールです。</p>
+        <div class="site-about-body">
+            <p>PROJECT NEBULA（ぷろねぶ）所属のVTuber 碓氷ゆら考案企画「ゆら姫に願いを」で紹介する短冊の作成を支援するツールです。</p>
+            <button id="replayTutorial" class="site-about-replay" type="button">使い方をもう一度見る</button>
+        </div>
     </details>
 
     <!-- メイン画面 -->
     <div class="main-container">
         <!-- 画像上のテキストボックスを操作するツールバー -->
         <div class="buttons">
-            <img src="./img/add.png" id="addBtn" alt="追加">
-            <img src="./img/settings.png" id="settingsBtn" alt="設定">
-            <img src="./img/download.png" id="downloadBtn" alt="ダウンロード">
-            <img src="./img/delete.png" id="deleteBtn" class="delete-action" alt="削除">
+            <img src="./img/add.png" width="64" height="64" id="addBtn" alt="追加">
+            <img src="./img/settings.png" width="64" height="64" id="settingsBtn" alt="設定">
+            <img src="./img/download.png" width="64" height="64" id="downloadBtn" alt="ダウンロード">
+            <img src="./img/delete.png" width="64" height="64" id="deleteBtn" class="delete-action" alt="削除">
         </div>
 
         <!-- 背景画像、文字Canvas、選択用の枠を同じ座標系で重ねる -->
@@ -128,6 +131,28 @@
             <p id="copyXUrlStatus" class="post-guide-status" aria-live="polite"></p>
             <button id="closePostGuide" class="post-guide-button" type="button">閉じる</button>
         </div>
+    </div>
+
+    <!-- 初回の使い方の案内。対象のボタンだけを明るく見せ、横に説明を出す -->
+    <dialog id="tutorial" class="tutorial" aria-labelledby="tutorialTitle">
+        <div id="tutorialSpot" class="tutorial-spot" aria-hidden="true"></div>
+        <div id="tutorialBubble" class="tutorial-bubble">
+            <div class="tutorial-bubble-body">
+                <p id="tutorialProgress" class="tutorial-progress"></p>
+                <h2 id="tutorialTitle" class="tutorial-title" tabindex="-1"></h2>
+                <p id="tutorialText" class="tutorial-text" aria-live="polite"></p>
+                <div class="tutorial-actions">
+                    <button id="tutorialSkip" class="tutorial-button" type="button">スキップ</button>
+                    <button id="tutorialNext" class="tutorial-button is-primary" type="button" autofocus>次へ</button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- 最初に文字を反映したあとに1回だけ出す、枠の操作の案内 -->
+    <div id="boxHint" class="box-hint" role="status" hidden>
+        <p id="boxHintText"></p>
+        <button id="boxHintOk" class="tutorial-button is-primary" type="button">OK</button>
     </div>
 
     <script src="./js/script.js"></script>

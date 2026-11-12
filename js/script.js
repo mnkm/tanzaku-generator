@@ -5,6 +5,7 @@ $(function () {
 
     const $deleteConfirm = $('#deleteConfirm');
     const $postGuide = $('#postGuide');
+    const $boxHint = $('#boxHint');
     const $bottomSheet = $('#bottomSheet');
     const $textCanvas = $('#textCanvas');
     const $baseImage = $('#baseImage');
@@ -339,6 +340,7 @@ $(function () {
     }
 
     function openBottomSheet() {
+        hideBoxHint();
         const activeTextBox = getTextBox(activeTextBoxId);
         $('#textInput').val(activeTextBox?.text ?? '');
         $bottomSheet.addClass('is-open').attr('aria-hidden', 'false');
@@ -363,6 +365,7 @@ $(function () {
             return false;
         }
 
+        hideBoxHint();
         interact(textBox.element[0]).unset();
         textBox.element.remove();
         textBoxes.splice(index, 1);
@@ -432,7 +435,7 @@ $(function () {
 
             const newTextBox = createTextBox();
             newTextBox.text = text;
-            fitAndRedraw(newTextBox);
+            fitAndRedraw(newTextBox).then(() => showBoxHintOnce(newTextBox));
             closeBottomSheet();
             return;
         }
@@ -450,7 +453,7 @@ $(function () {
         closeBottomSheet();
 
         if (isPendingTextBox) {
-            fitAndRedraw(activeTextBox);
+            fitAndRedraw(activeTextBox).then(() => showBoxHintOnce(activeTextBox));
             return;
         }
 
@@ -549,6 +552,193 @@ $(function () {
         updateCanvas();
     }
 
-    // 初期表示時は追加ボタンと同じ処理でメニューを開く
-    $('#addBtn').trigger('click');
+    // 一度だけ出す案内の記録。記録を読めて未記録で、かつ書き込めたときだけ true を返す。
+    // localStorage が使えない環境で毎回出さないよう、使えないときは出さない側に倒す
+    const TUTORIAL_KEY = 'tanzaku-tutorial-v1';
+    const BOX_HINT_KEY = 'tanzaku-box-hint-v1';
+
+    function claimOnce(key) {
+        try {
+            if (localStorage.getItem(key) !== null) {
+                return false;
+            }
+            localStorage.setItem(key, '1');
+            return localStorage.getItem(key) === '1';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // 使い方の案内(コーチマーク)。対象のボタンを穴の枠で明るく見せ、吹き出しで説明する
+    const TUTORIAL_STEPS = [
+        {
+            target: '#addBtn',
+            title: '文字を入れる',
+            text: '「+」(追加ボタン)で文字の枠を追加し、短冊に入れる文字を入力します。枠はいくつでも足せて、タップした枠が選ばれます。'
+        },
+        {
+            target: '#settingsBtn',
+            title: '文字を直す',
+            text: '設定ボタンで、選んだ枠の文字を直せます。文字の大きさと行間もここで変えます。'
+        },
+        {
+            target: '#downloadBtn',
+            title: '画像を保存する',
+            text: 'ダウンロードボタンで画像を保存します。X に投稿する手順も表示します。右上の「i」から、この使い方をもう一度見られます。'
+        }
+    ];
+    const tutorial = $('#tutorial')[0];
+    const $tutorialSpot = $('#tutorialSpot');
+    const $tutorialBubble = $('#tutorialBubble');
+    let tutorialStep = 0;
+    let tutorialOnClose = null;
+    let tutorialFrame = 0;
+
+    function positionTutorial() {
+        tutorialFrame = 0;
+        if (!tutorial.open) {
+            return;
+        }
+
+        const margin = 16;
+        const gap = 14;
+        const spotPadding = 6;
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = document.documentElement.clientHeight;
+        const rect = $(TUTORIAL_STEPS[tutorialStep].target)[0].getBoundingClientRect();
+
+        $tutorialSpot.css({
+            left: (rect.left - spotPadding) + 'px',
+            top: (rect.top - spotPadding) + 'px',
+            width: (rect.width + spotPadding * 2) + 'px',
+            height: (rect.height + spotPadding * 2) + 'px'
+        });
+
+        // 吹き出しは対象の下に出し、収まらなければ上に出す。左右は画面の中に収める
+        const bubble = $tutorialBubble[0];
+        const bubbleWidth = bubble.offsetWidth;
+        const bubbleHeight = bubble.offsetHeight;
+        const centerX = rect.left + rect.width / 2;
+        const left = Math.min(Math.max(margin, centerX - bubbleWidth / 2), viewportWidth - margin - bubbleWidth);
+        const below = rect.bottom + spotPadding + gap;
+        const isAbove = below + bubbleHeight > viewportHeight - margin
+            && rect.top - spotPadding - gap - bubbleHeight >= margin;
+        // 上にも下にも収まらないときは、画面の中に収まる位置まで上げる(中身は吹き出しの中でスクロールする)
+        const top = isAbove
+            ? rect.top - spotPadding - gap - bubbleHeight
+            : Math.max(margin, Math.min(below, viewportHeight - margin - bubbleHeight));
+
+        $tutorialBubble
+            .toggleClass('is-above', isAbove)
+            .css({ left: left + 'px', top: top + 'px', '--arrow-x': (centerX - left) + 'px' });
+    }
+
+    // 回転やキーボードの開閉で画面の大きさが変わったら、次の描画の前に置き直す
+    function schedulePositionTutorial() {
+        if (tutorial.open && !tutorialFrame) {
+            tutorialFrame = requestAnimationFrame(positionTutorial);
+        }
+    }
+
+    function showTutorialStep(index) {
+        const step = TUTORIAL_STEPS[index];
+        const isLast = index === TUTORIAL_STEPS.length - 1;
+        tutorialStep = index;
+        $('#tutorialProgress').text((index + 1) + ' / ' + TUTORIAL_STEPS.length);
+        $('#tutorialTitle').text(step.title);
+        $('#tutorialText').text(step.text);
+        $('#tutorialNext').text(isLast ? 'はじめる' : '次へ');
+        $('#tutorialSkip').prop('hidden', isLast);
+        positionTutorial();
+        // 2段階目からは見出しに移り、読み上げで新しい説明が伝わるようにする
+        if (index > 0) {
+            $('#tutorialTitle').trigger('focus');
+        }
+    }
+
+    // dialog に対応しないブラウザ(iOS 15.3 以前など)では案内を出さない
+    const canShowTutorial = typeof tutorial.showModal === 'function';
+
+    function startTutorial(onClose) {
+        tutorialOnClose = onClose;
+        // 案内の間はページをスクロールさせない(穴が対象からずれないように)
+        $('html').addClass('tutorial-open');
+        tutorial.showModal();
+        showTutorialStep(0);
+    }
+
+    $('#tutorialNext').on('click', () => {
+        if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+            showTutorialStep(tutorialStep + 1);
+        } else {
+            tutorial.close();
+        }
+    });
+
+    $('#tutorialSkip').on('click', () => tutorial.close());
+
+    // スキップ、はじめる、Esc のどれで閉じても、閉じたあとの処理を1回だけ行う
+    $(tutorial).on('close', () => {
+        $('html').removeClass('tutorial-open');
+        const onClose = tutorialOnClose;
+        tutorialOnClose = null;
+        if (onClose) {
+            onClose();
+        }
+    });
+
+    $(window).on('resize load scroll', schedulePositionTutorial);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', schedulePositionTutorial);
+        window.visualViewport.addEventListener('scroll', schedulePositionTutorial);
+    }
+
+    // 枠の操作の案内。最初に文字を反映して枠の大きさが決まったあとに1回だけ出す
+
+    // 書体の読み込みを待つ間に枠が消されたり、入力シートが開かれたりしていたら出さない
+    function showBoxHintOnce(textBox) {
+        if (!textBoxes.includes(textBox) || $bottomSheet.hasClass('is-open')) {
+            return;
+        }
+        if (claimOnce(BOX_HINT_KEY)) {
+            // 文を入れ直して、読み上げに新しい案内として伝える
+            $('#boxHintText').text('枠をドラッグすると移動します。枠の端か右下の四角を引くと、枠の大きさが変わります(文字の大きさは設定ボタンで変えます)。');
+            $boxHint.prop('hidden', false);
+        }
+    }
+
+    function hideBoxHint() {
+        $boxHint.prop('hidden', true);
+    }
+
+    $('#boxHintOk').on('click', hideBoxHint);
+    // 枠に触れたら、案内を読んで操作を始めたとみなして閉じる
+    $textBoxes.on('pointerdown', '.text-box', hideBoxHint);
+
+    // 枠が1つも無いときだけ、追加ボタンと同じ処理で文字の入力を始める
+    function openFirstTextBox() {
+        if (!textBoxes.length) {
+            $('#addBtn').trigger('click');
+        }
+    }
+
+    // サイトの説明から、使い方の案内をもう一度見る
+    $('#replayTutorial').prop('hidden', !canShowTutorial).on('click', () => {
+        const about = $('.site-about')[0];
+        about.open = false;
+        startTutorial(() => {
+            if (textBoxes.length) {
+                $(about).find('summary').trigger('focus');
+            } else {
+                openFirstTextBox();
+            }
+        });
+    });
+
+    // 初回の訪問では使い方の案内を出し、閉じたあとに文字の入力を始める。2回目からはすぐに入力を始める
+    if (canShowTutorial && claimOnce(TUTORIAL_KEY)) {
+        startTutorial(openFirstTextBox);
+    } else {
+        openFirstTextBox();
+    }
 });
