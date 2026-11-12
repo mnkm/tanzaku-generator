@@ -336,7 +336,21 @@ body {
     font-size: 13px;
 }
 
-/* x.com を開くリンクを、隣の「閉じる」と同じ大きさのボタンに見せる */
+.post-guide .post-guide-status {
+    min-height: 1.2em;
+    margin: 8px 0 0;
+    font-size: 13px;
+    text-align: center;
+}
+
+.post-guide-close {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+}
+
+/* x.com を開くリンクを、隣の「URL をコピー」と同じ大きさのボタンに見せる */
 .post-guide-link {
     flex: 1;
     padding: 10px;

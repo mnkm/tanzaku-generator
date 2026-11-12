@@ -493,15 +493,6 @@ $(function () {
     // 画像を保存して、ブラウザの x.com から投稿するよう案内する
     const X_COMPOSE_URL = 'https://x.com/compose/post';
 
-    // Android では x.com のリンクが X のアプリで開きやすいので、Chrome で開くよう指定する
-    function xComposeHref() {
-        if (/Android/i.test(navigator.userAgent)) {
-            return 'intent://x.com/compose/post#Intent;scheme=https;package=com.android.chrome;'
-                + 'S.browser_fallback_url=' + encodeURIComponent(X_COMPOSE_URL) + ';end';
-        }
-        return X_COMPOSE_URL;
-    }
-
     $('#shareBtn').on('click', async function () {
         const canvas = await renderOutputCanvas();
         if (!canvas) {
@@ -509,8 +500,19 @@ $(function () {
         }
 
         downloadCanvas(canvas);
-        $('#openX').attr('href', xComposeHref());
+        $('#copyXUrlStatus').text('');
         $postGuide.css('display', 'flex');
+    });
+
+    // リンクのタップで X のアプリが開いてしまう端末向けに、URL をコピーしてアドレスバーに貼ってもらう。
+    // アドレスバーに入れた URL はアプリに渡らず、ブラウザで開く
+    $('#copyXUrl').on('click', async () => {
+        try {
+            await navigator.clipboard.writeText(X_COMPOSE_URL);
+            $('#copyXUrlStatus').text('コピーしました。ブラウザの新しいタブのアドレスバーに貼り付けてください。');
+        } catch (error) {
+            $('#copyXUrlStatus').text('コピーできませんでした。アドレスバーに ' + X_COMPOSE_URL + ' と入力してください。');
+        }
     });
 
     $('#closePostGuide').on('click', () => $postGuide.hide());
