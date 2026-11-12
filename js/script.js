@@ -68,8 +68,8 @@ $(function () {
         textBoxes.forEach(syncTextBox);
     }
 
-    // 縦書きで横に倒して描く文字(長音符・波線・括弧・半角の英数字など)
-    const SIDEWAYS_CHARS = /[ー－―‐—–〜～…‥＝｜（）「」『』【】〔〕［］｛｝〈〉《》＜＞→←⇒\u0020-\u007E\uFF61-\uFF9F]/;
+    // 縦書きで横に倒して描く文字(長音符・波線・括弧・コロン・引用符・欧文の文字など)
+    const SIDEWAYS_CHARS = /[ー－―‐—–〜～…‥＝｜：；（）「」『』【】〔〕［］｛｝〈〉《》＜＞“”‘’→←⇒\u0020-\u007E\u00A0-\u02FF\u0370-\u04FF\uFF61-\uFF9F]/;
     // 縦書きで字面の右上に寄せる文字(句読点)と、少し右上に寄せる文字(小書きの仮名)
     const CORNER_CHARS = /[、。，．]/;
     const SMALL_KANA_CHARS = /[ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶㇰ-ㇿ]/;
@@ -77,44 +77,62 @@ $(function () {
     // 文字の大きさを測るための Canvas
     const measureContext = document.createElement('canvas').getContext('2d');
 
-    // 縦書きの1列を、1文字ずつの送りと列の幅に分けて測る。
-    // ブラウザの縦書きの機能には頼らず、文字を1つずつ立てて(一部は倒して)描くので、端末による違いが出ない
-    function measureColumn(text, font) {
+    // 絵文字や結合文字を分けないよう、見た目の1文字(書記素)ごとに分ける
+    const graphemeSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
+        ? new Intl.Segmenter('ja', { granularity: 'grapheme' })
+        : null;
+
+    function splitGraphemes(text) {
+        if (graphemeSegmenter) {
+            return Array.from(graphemeSegmenter.segment(text), segment => segment.segment);
+        }
+        return Array.from(text);
+    }
+
+    // 1文字ずつ、縦に送る長さ(advance)と横に倒すかを測る
+    function measureChars(text, font) {
         measureContext.font = font;
-        const metrics = measureContext.measureText(text || ' ');
-        const chars = Array.from(text).map(char => ({
+        return splitGraphemes(text).map(char => ({
             char,
             advance: measureContext.measureText(char).width,
             sideways: SIDEWAYS_CHARS.test(char)
         }));
-        return {
-            chars,
-            width: Math.ceil(metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent),
-            height: chars.reduce((sum, item) => sum + item.advance, 0)
-        };
     }
 
+    // 縦書きの列の幅。書体の上下の高さで決まり、文字によらない
+    function columnWidth(font) {
+        measureContext.font = font;
+        const metrics = measureContext.measureText(' ');
+        return Math.ceil(metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
+    }
+
+    // 縦書きの1列の大きさを測る。
+    // ブラウザの縦書きの機能には頼らず、文字を1つずつ立てて(一部は倒して)描くので、端末による違いが出ない
     function measureVerticalText(text, font) {
-        const column = measureColumn(text, font);
-        return { width: column.width, height: column.height };
+        return {
+            width: columnWidth(font),
+            height: measureChars(text, font).reduce((sum, item) => sum + item.advance, 0)
+        };
     }
 
     // 縦書きの1列を Canvas に描く
     function renderVerticalText(text, font) {
-        const column = measureColumn(text, font);
+        const chars = measureChars(text, font);
+        const width = columnWidth(font);
+        const height = chars.reduce((sum, item) => sum + item.advance, 0);
+        const em = measureContext.measureText('あ').width;
         const canvas = document.createElement('canvas');
-        canvas.width = column.width;
-        canvas.height = Math.max(1, Math.ceil(column.height));
+        canvas.width = width;
+        canvas.height = Math.max(1, Math.ceil(height));
         const ctx = canvas.getContext('2d');
         ctx.font = font;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        const em = measureContext.measureText('あ').width;
         let y = 0;
-        column.chars.forEach(({ char, advance, sideways }) => {
+        chars.forEach(({ char, advance, sideways }) => {
             ctx.save();
-            ctx.translate(column.width / 2, y + advance / 2);
+            ctx.translate(width / 2, y + advance / 2);
             if (sideways) {
                 ctx.rotate(Math.PI / 2);
             } else if (CORNER_CHARS.test(char)) {
@@ -130,21 +148,21 @@ $(function () {
     }
 
     function wrapVerticalText(text, font, maxHeight) {
-        // 文字ごとの高さを計測し、描画可能な高さを超えたら次の縦列へ送る
+        // 文字ごとの送りを足していき、描画可能な高さを超えたら次の縦列へ送る
         const columns = [];
         let column = '';
+        let columnHeight = 0;
 
-        for (const char of (text || ' ')) {
-            const candidate = column + char;
-            const size = measureVerticalText(candidate, font);
-
-            if (column && size.height > maxHeight) {
+        measureChars(text || ' ', font).forEach(({ char, advance }) => {
+            if (column && columnHeight + advance > maxHeight) {
                 columns.push(column);
                 column = char;
+                columnHeight = advance;
             } else {
-                column = candidate;
+                column += char;
+                columnHeight += advance;
             }
-        }
+        });
 
         if (column) {
             columns.push(column);

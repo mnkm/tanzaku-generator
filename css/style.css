@@ -267,13 +267,12 @@ body {
     box-sizing: border-box;
     background-color: rgba(0, 0, 0, 0.5);
     display: none;
-    align-items: center;
-    justify-content: center;
     overflow-y: auto;
     z-index: 20;
 }
 
 .modal-content {
+    margin: auto;
     background: #fff;
     padding: 20px;
     border-radius: 10px;
