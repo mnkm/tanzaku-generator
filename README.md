@@ -22,9 +22,10 @@ HTML・CSS・JavaScript だけで作っており、フレームワークは使�
 |---|---|---|---|
 | jQuery | 3.7.1 | DOM の操作とイベントの処理 | MIT |
 | [interact.js](https://interactjs.io/) | 1.10.28 | テキストボックスの移動と大きさの変更 | MIT |
-| [@mogamoga1024/vertical-text-canvas](https://www.npmjs.com/package/@mogamoga1024/vertical-text-canvas) | 1.0.11 | Canvas への縦書きの描画 | MIT OR WTFPL |
 
 ライブラリは npm で管理し、版を `package.json` と `package-lock.json` で固定しています。`scripts/copy-vendor.mjs` が配布ファイルを `js/vendor/` にコピーします(`js/vendor/` はリポジトリに含めません)。更新するときは、`package.json` の版を変えて `npm install` を実行します。
+
+縦書きは、ブラウザの縦書きの機能を使わず、`js/script.js` で1文字ずつ Canvas に描きます。長音符、括弧、半角の英数字などは横に倒し、句読点と小書きの仮名は右上に寄せます。
 
 フォントは Google Fonts の Zen Kurenaido です。短冊に入れた文字を含むファイルだけを、Canvas に描く前に `document.fonts.load` で読み込みます。
 

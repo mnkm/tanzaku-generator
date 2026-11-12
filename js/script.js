@@ -67,6 +67,67 @@ $(function () {
         textBoxes.forEach(syncTextBox);
     }
 
+    // 縦書きで横に倒して描く文字(長音符・波線・括弧・半角の英数字など)
+    const SIDEWAYS_CHARS = /[ー－―‐—–〜～…‥＝｜（）「」『』【】〔〕［］｛｝〈〉《》＜＞→←⇒\u0020-\u007E\uFF61-\uFF9F]/;
+    // 縦書きで字面の右上に寄せる文字(句読点)と、少し右上に寄せる文字(小書きの仮名)
+    const CORNER_CHARS = /[、。，．]/;
+    const SMALL_KANA_CHARS = /[ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶㇰ-ㇿ]/;
+
+    // 文字の大きさを測るための Canvas
+    const measureContext = document.createElement('canvas').getContext('2d');
+
+    // 縦書きの1列を、1文字ずつの送りと列の幅に分けて測る。
+    // ブラウザの縦書きの機能には頼らず、文字を1つずつ立てて(一部は倒して)描くので、端末による違いが出ない
+    function measureColumn(text, font) {
+        measureContext.font = font;
+        const metrics = measureContext.measureText(text || ' ');
+        const chars = Array.from(text).map(char => ({
+            char,
+            advance: measureContext.measureText(char).width,
+            sideways: SIDEWAYS_CHARS.test(char)
+        }));
+        return {
+            chars,
+            width: Math.ceil(metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent),
+            height: chars.reduce((sum, item) => sum + item.advance, 0)
+        };
+    }
+
+    function measureVerticalText(text, font) {
+        const column = measureColumn(text, font);
+        return { width: column.width, height: column.height };
+    }
+
+    // 縦書きの1列を Canvas に描く
+    function renderVerticalText(text, font) {
+        const column = measureColumn(text, font);
+        const canvas = document.createElement('canvas');
+        canvas.width = column.width;
+        canvas.height = Math.max(1, Math.ceil(column.height));
+        const ctx = canvas.getContext('2d');
+        ctx.font = font;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const em = measureContext.measureText('あ').width;
+        let y = 0;
+        column.chars.forEach(({ char, advance, sideways }) => {
+            ctx.save();
+            ctx.translate(column.width / 2, y + advance / 2);
+            if (sideways) {
+                ctx.rotate(Math.PI / 2);
+            } else if (CORNER_CHARS.test(char)) {
+                ctx.translate(em * 0.5, -em * 0.5);
+            } else if (SMALL_KANA_CHARS.test(char)) {
+                ctx.translate(em * 0.08, -em * 0.08);
+            }
+            ctx.fillText(char, 0, 0);
+            ctx.restore();
+            y += advance;
+        });
+        return canvas;
+    }
+
     function wrapVerticalText(text, font, maxHeight) {
         // 文字ごとの高さを計測し、描画可能な高さを超えたら次の縦列へ送る
         const columns = [];
@@ -74,7 +135,7 @@ $(function () {
 
         for (const char of (text || ' ')) {
             const candidate = column + char;
-            const size = measureVerticalTextCanvasSize(candidate, font);
+            const size = measureVerticalText(candidate, font);
 
             if (column && size.height > maxHeight) {
                 columns.push(column);
@@ -109,7 +170,7 @@ $(function () {
 
         // 折り返しはボックス自身の高さのみで決める（表示位置による揺れを避ける）
         const textObjs = wrapColumns(textBox.text, font, Math.max(1, textBox.height))
-            .map(text => createVerticalTextCanvas(text, font));
+            .map(text => renderVerticalText(text, font));
         textBox._columnsCache = { key: cacheKey, textObjs };
         return textObjs;
     }
@@ -118,7 +179,7 @@ $(function () {
         // 追加直後だけ、入力内容と画像の描画可能領域から枠を自動サイズ化する
         const font = fontFor(textBox);
         const lines = textBox.text.split('\n').map(text => text || ' ');
-        const sizes = lines.map(text => measureVerticalTextCanvasSize(text, font));
+        const sizes = lines.map(text => measureVerticalText(text, font));
         const lineSpacing = textBox.fontSize * textBox.lineHeight;
         const image = $baseImage[0];
         const maxWidth = Math.max(30, (image.naturalWidth || Infinity) - textBox.x);
