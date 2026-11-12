@@ -338,28 +338,39 @@ body {
 
 .post-guide .post-guide-status {
     min-height: 1.2em;
-    margin: 8px 0 0;
+    margin: 0 0 10px;
     font-size: 13px;
     text-align: center;
 }
 
-.post-guide-close {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
+/* 案内のボタンは、下部メニューの「内容を反映」と同じ形にそろえる。x.com を開くリンクだけを青にする */
+.post-guide-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
-/* x.com を開くリンクを、隣の「URL をコピー」と同じ大きさのボタンに見せる */
-.post-guide-link {
-    flex: 1;
-    padding: 10px;
-    border-radius: 6px;
-    background: #111;
-    color: #fff;
+.post-guide-button {
+    display: block;
+    width: 100%;
+    padding: 13px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #eee9e0;
+    color: #332e29;
+    font: inherit;
     font-size: 16px;
+    line-height: 1.4;
     text-align: center;
     text-decoration: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.post-guide-button.is-primary {
+    background: #007AFF;
+    color: #fff;
 }
 
 #textBoxes {
