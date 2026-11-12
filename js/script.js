@@ -4,6 +4,7 @@ $(function () {
     const FONT_FAMILY = 'Zen Kurenaido';
 
     const $deleteConfirm = $('#deleteConfirm');
+    const $postGuide = $('#postGuide');
     const $bottomSheet = $('#bottomSheet');
     const $textCanvas = $('#textCanvas');
     const $baseImage = $('#baseImage');
@@ -388,6 +389,7 @@ $(function () {
     $(document).on('keydown', event => {
         if (event.key === 'Escape') {
             $deleteConfirm.hide();
+            $postGuide.hide();
             closeBottomSheet();
         }
     });
@@ -487,29 +489,34 @@ $(function () {
         }
     });
 
-    // 合成した画像をPNGのファイルとして端末の共有メニューに渡す(モック)。
-    // ファイルの共有に対応しないブラウザでは、ダウンロードに切り替える
+    // X に投稿するボタン(モック)。端末の共有メニューから X のアプリに渡すと JPEG に変わって透過が消えるため、
+    // 画像を保存して、ブラウザの x.com から投稿するよう案内する
+    const X_COMPOSE_URL = 'https://x.com/compose/post';
+
+    // Android では x.com のリンクが X のアプリで開きやすいので、Chrome で開くよう指定する
+    function xComposeHref() {
+        if (/Android/i.test(navigator.userAgent)) {
+            return 'intent://x.com/compose/post#Intent;scheme=https;package=com.android.chrome;'
+                + 'S.browser_fallback_url=' + encodeURIComponent(X_COMPOSE_URL) + ';end';
+        }
+        return X_COMPOSE_URL;
+    }
+
     $('#shareBtn').on('click', async function () {
         const canvas = await renderOutputCanvas();
         if (!canvas) {
             return;
         }
 
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        const file = blob && new File([blob], 'output.png', { type: 'image/png' });
-        if (!file || !navigator.canShare || !navigator.canShare({ files: [file] })) {
-            downloadCanvas(canvas);
-            return;
-        }
+        downloadCanvas(canvas);
+        $('#openX').attr('href', xComposeHref());
+        $postGuide.css('display', 'flex');
+    });
 
-        try {
-            await navigator.share({ files: [file] });
-        } catch (error) {
-            // 利用者が共有メニューを閉じたときは何もしない
-            if (error.name !== 'AbortError') {
-                console.warn('共有できないため、ダウンロードに切り替えます。', error);
-                downloadCanvas(canvas);
-            }
+    $('#closePostGuide').on('click', () => $postGuide.hide());
+    $postGuide.on('click', event => {
+        if (event.target === event.currentTarget) {
+            $postGuide.hide();
         }
     });
 

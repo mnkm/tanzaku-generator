@@ -314,6 +314,40 @@ body {
     font-size: 16px;
 }
 
+.post-guide h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+.post-guide p,
+.post-guide ol {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.7;
+    text-align: left;
+}
+
+.post-guide ol {
+    padding-left: 1.4em;
+}
+
+.post-guide .post-guide-note {
+    color: #5f5a52;
+    font-size: 13px;
+}
+
+/* x.com を開くリンクを、隣の「閉じる」と同じ大きさのボタンに見せる */
+.post-guide-link {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    background: #111;
+    color: #fff;
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none;
+}
+
 #textBoxes {
     position: absolute;
     top: 0;
