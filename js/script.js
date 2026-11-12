@@ -393,11 +393,11 @@ $(function () {
 
     $('#cancelDelete').on('click', () => $deleteConfirm.hide());
 
-    // 背景画像と全テキストボックスを合成してPNGとして出力する
-    $('#downloadBtn').on('click', async function () {
+    // 背景画像と全テキストボックスを合成した Canvas を作る。背景画像が読み込めていなければ null を返す
+    async function renderOutputCanvas() {
         const img = $baseImage[0];
         if (!img.complete || !img.naturalWidth || !img.naturalHeight) {
-            return;
+            return null;
         }
 
         // 書体の読み込みが終わる前に押されても、プレビューと同じ書体で書き出す
@@ -408,11 +408,48 @@ $(function () {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
         drawText(ctx);
+        return canvas;
+    }
 
+    function downloadCanvas(canvas) {
         const link = document.createElement('a');
         link.download = 'output.png';
         link.href = canvas.toDataURL();
         link.click();
+    }
+
+    // 合成した画像をPNGとして保存する
+    $('#downloadBtn').on('click', async function () {
+        const canvas = await renderOutputCanvas();
+        if (canvas) {
+            downloadCanvas(canvas);
+        }
+    });
+
+    // 合成した画像をPNGのファイルとして端末の共有メニューに渡す(モック)。
+    // ファイルの共有に対応しないブラウザでは、ダウンロードに切り替える
+    $('#shareBtn').on('click', async function () {
+        const canvas = await renderOutputCanvas();
+        if (!canvas) {
+            return;
+        }
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = blob && new File([blob], 'output.png', { type: 'image/png' });
+        if (!file || !navigator.canShare || !navigator.canShare({ files: [file] })) {
+            downloadCanvas(canvas);
+            return;
+        }
+
+        try {
+            await navigator.share({ files: [file] });
+        } catch (error) {
+            // 利用者が共有メニューを閉じたときは何もしない
+            if (error.name !== 'AbortError') {
+                console.warn('共有できないため、ダウンロードに切り替えます。', error);
+                downloadCanvas(canvas);
+            }
+        }
     });
 
     // 画像の読み込み後に自然サイズと表示サイズを初期化する

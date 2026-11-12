@@ -8,6 +8,7 @@
 | `img/add.png` | 追加ボタン |  |
 | `img/settings.png` | 設定ボタン |  |
 | `img/download.png` | ダウンロードボタン |  |
+| `img/share.png` | 共有ボタン |  |
 | `img/delete.png` | 削除ボタン |  |
 | `img/information.svg` | サイトの説明を開くボタン |  |
 

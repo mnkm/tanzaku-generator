@@ -84,6 +84,22 @@ body {
     border-left: 1px solid #d8d2c8;
 }
 
+/* 幅の狭い画面では、ツールバーが右上の説明ボタンに重ならないよう詰める */
+@media (max-width: 399px) {
+    .buttons {
+        gap: 6px;
+    }
+
+    .buttons img {
+        width: 36px;
+    }
+
+    .buttons .delete-action {
+        margin-left: 8px;
+        padding-left: 8px;
+    }
+}
+
 /* モバイルでは上部ツールバーを除いた高さに画像を収める */
 @media (max-width: 599px) {
     body {
