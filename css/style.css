@@ -267,13 +267,12 @@ body {
     box-sizing: border-box;
     background-color: rgba(0, 0, 0, 0.5);
     display: none;
-    align-items: center;
-    justify-content: center;
     overflow-y: auto;
     z-index: 20;
 }
 
 .modal-content {
+    margin: auto;
     background: #fff;
     padding: 20px;
     border-radius: 10px;
@@ -296,6 +295,65 @@ body {
     flex: 1;
     padding: 10px;
     font-size: 16px;
+}
+
+.post-guide h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+.post-guide p,
+.post-guide ol {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.7;
+    text-align: left;
+}
+
+.post-guide ol {
+    padding-left: 1.4em;
+}
+
+.post-guide .post-guide-note {
+    color: #5f5a52;
+    font-size: 13px;
+}
+
+.post-guide .post-guide-status {
+    min-height: 1.2em;
+    margin: 0 0 10px;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* 案内のボタンは、下部メニューの「内容を反映」と同じ形にそろえる。x.com を開くリンクだけを青にする */
+.post-guide-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.post-guide-button {
+    display: block;
+    width: 100%;
+    padding: 13px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #eee9e0;
+    color: #332e29;
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.post-guide-button.is-primary {
+    background: #007AFF;
+    color: #fff;
 }
 
 #textBoxes {

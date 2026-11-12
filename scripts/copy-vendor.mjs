@@ -6,7 +6,6 @@ import { cpSync, rmSync } from 'node:fs';
 const TARGETS = [
   ['jquery/dist/jquery.min.js', 'jquery.min.js'],
   ['interactjs/dist/interact.min.js', 'interact.min.js'],
-  ['@mogamoga1024/vertical-text-canvas/vertical_text_canvas.js', 'vertical_text_canvas.js'],
 ];
 
 const root = new URL('../', import.meta.url);

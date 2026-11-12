@@ -4,6 +4,7 @@ $(function () {
     const FONT_FAMILY = 'Zen Kurenaido';
 
     const $deleteConfirm = $('#deleteConfirm');
+    const $postGuide = $('#postGuide');
     const $bottomSheet = $('#bottomSheet');
     const $textCanvas = $('#textCanvas');
     const $baseImage = $('#baseImage');
@@ -67,22 +68,101 @@ $(function () {
         textBoxes.forEach(syncTextBox);
     }
 
+    // 縦書きで横に倒して描く文字(長音符・波線・括弧・コロン・引用符・欧文の文字など)
+    const SIDEWAYS_CHARS = /[ー－―‐—–〜～…‥＝｜：；（）「」『』【】〔〕［］｛｝〈〉《》＜＞“”‘’→←⇒\u0020-\u007E\u00A0-\u02FF\u0370-\u04FF\uFF61-\uFF9F]/;
+    // 縦書きで字面の右上に寄せる文字(句読点)と、少し右上に寄せる文字(小書きの仮名)
+    const CORNER_CHARS = /[、。，．]/;
+    const SMALL_KANA_CHARS = /[ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶㇰ-ㇿ]/;
+
+    // 文字の大きさを測るための Canvas
+    const measureContext = document.createElement('canvas').getContext('2d');
+
+    // 絵文字や結合文字を分けないよう、見た目の1文字(書記素)ごとに分ける
+    const graphemeSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
+        ? new Intl.Segmenter('ja', { granularity: 'grapheme' })
+        : null;
+
+    function splitGraphemes(text) {
+        if (graphemeSegmenter) {
+            return Array.from(graphemeSegmenter.segment(text), segment => segment.segment);
+        }
+        return Array.from(text);
+    }
+
+    // 1文字ずつ、縦に送る長さ(advance)と横に倒すかを測る
+    function measureChars(text, font) {
+        measureContext.font = font;
+        return splitGraphemes(text).map(char => ({
+            char,
+            advance: measureContext.measureText(char).width,
+            sideways: SIDEWAYS_CHARS.test(char)
+        }));
+    }
+
+    // 縦書きの列の幅。書体の上下の高さで決まり、文字によらない
+    function columnWidth(font) {
+        measureContext.font = font;
+        const metrics = measureContext.measureText(' ');
+        return Math.ceil(metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
+    }
+
+    // 縦書きの1列の大きさを測る。
+    // ブラウザの縦書きの機能には頼らず、文字を1つずつ立てて(一部は倒して)描くので、端末による違いが出ない
+    function measureVerticalText(text, font) {
+        return {
+            width: columnWidth(font),
+            height: measureChars(text, font).reduce((sum, item) => sum + item.advance, 0)
+        };
+    }
+
+    // 縦書きの1列を Canvas に描く
+    function renderVerticalText(text, font) {
+        const chars = measureChars(text, font);
+        const width = columnWidth(font);
+        const height = chars.reduce((sum, item) => sum + item.advance, 0);
+        const em = measureContext.measureText('あ').width;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = Math.max(1, Math.ceil(height));
+        const ctx = canvas.getContext('2d');
+        ctx.font = font;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        let y = 0;
+        chars.forEach(({ char, advance, sideways }) => {
+            ctx.save();
+            ctx.translate(width / 2, y + advance / 2);
+            if (sideways) {
+                ctx.rotate(Math.PI / 2);
+            } else if (CORNER_CHARS.test(char)) {
+                ctx.translate(em * 0.5, -em * 0.5);
+            } else if (SMALL_KANA_CHARS.test(char)) {
+                ctx.translate(em * 0.08, -em * 0.08);
+            }
+            ctx.fillText(char, 0, 0);
+            ctx.restore();
+            y += advance;
+        });
+        return canvas;
+    }
+
     function wrapVerticalText(text, font, maxHeight) {
-        // 文字ごとの高さを計測し、描画可能な高さを超えたら次の縦列へ送る
+        // 文字ごとの送りを足していき、描画可能な高さを超えたら次の縦列へ送る
         const columns = [];
         let column = '';
+        let columnHeight = 0;
 
-        for (const char of (text || ' ')) {
-            const candidate = column + char;
-            const size = measureVerticalTextCanvasSize(candidate, font);
-
-            if (column && size.height > maxHeight) {
+        measureChars(text || ' ', font).forEach(({ char, advance }) => {
+            if (column && columnHeight + advance > maxHeight) {
                 columns.push(column);
                 column = char;
+                columnHeight = advance;
             } else {
-                column = candidate;
+                column += char;
+                columnHeight += advance;
             }
-        }
+        });
 
         if (column) {
             columns.push(column);
@@ -109,7 +189,7 @@ $(function () {
 
         // 折り返しはボックス自身の高さのみで決める（表示位置による揺れを避ける）
         const textObjs = wrapColumns(textBox.text, font, Math.max(1, textBox.height))
-            .map(text => createVerticalTextCanvas(text, font));
+            .map(text => renderVerticalText(text, font));
         textBox._columnsCache = { key: cacheKey, textObjs };
         return textObjs;
     }
@@ -118,7 +198,7 @@ $(function () {
         // 追加直後だけ、入力内容と画像の描画可能領域から枠を自動サイズ化する
         const font = fontFor(textBox);
         const lines = textBox.text.split('\n').map(text => text || ' ');
-        const sizes = lines.map(text => measureVerticalTextCanvasSize(text, font));
+        const sizes = lines.map(text => measureVerticalText(text, font));
         const lineSpacing = textBox.fontSize * textBox.lineHeight;
         const image = $baseImage[0];
         const maxWidth = Math.max(30, (image.naturalWidth || Infinity) - textBox.x);
@@ -327,6 +407,7 @@ $(function () {
     $(document).on('keydown', event => {
         if (event.key === 'Escape') {
             $deleteConfirm.hide();
+            $postGuide.hide();
             closeBottomSheet();
         }
     });
@@ -393,11 +474,11 @@ $(function () {
 
     $('#cancelDelete').on('click', () => $deleteConfirm.hide());
 
-    // 背景画像と全テキストボックスを合成してPNGとして出力する
-    $('#downloadBtn').on('click', async function () {
+    // 背景画像と全テキストボックスを合成した Canvas を作る。背景画像が読み込めていなければ null を返す
+    async function renderOutputCanvas() {
         const img = $baseImage[0];
         if (!img.complete || !img.naturalWidth || !img.naturalHeight) {
-            return;
+            return null;
         }
 
         // 書体の読み込みが終わる前に押されても、プレビューと同じ書体で書き出す
@@ -408,11 +489,47 @@ $(function () {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
         drawText(ctx);
+        return canvas;
+    }
 
+    function downloadCanvas(canvas) {
         const link = document.createElement('a');
         link.download = 'output.png';
         link.href = canvas.toDataURL();
         link.click();
+    }
+
+    // 合成した画像をPNGとして保存し、X への投稿の案内を出す。
+    // X のアプリから投稿すると JPEG に変わって透過が消えるため、ブラウザの x.com から投稿するよう案内する
+    const X_COMPOSE_URL = 'https://x.com/compose/post';
+
+    $('#downloadBtn').on('click', async function () {
+        const canvas = await renderOutputCanvas();
+        if (!canvas) {
+            return;
+        }
+
+        downloadCanvas(canvas);
+        $('#copyXUrlStatus').text('');
+        $postGuide.css('display', 'flex');
+    });
+
+    // リンクのタップで X のアプリが開いてしまう端末向けに、URL をコピーしてアドレスバーに貼ってもらう。
+    // アドレスバーに入れた URL はアプリに渡らず、ブラウザで開く
+    $('#copyXUrl').on('click', async () => {
+        try {
+            await navigator.clipboard.writeText(X_COMPOSE_URL);
+            $('#copyXUrlStatus').text('コピーしました。ブラウザの新しいタブのアドレスバーに貼り付けてください。');
+        } catch (error) {
+            $('#copyXUrlStatus').text('コピーできませんでした。アドレスバーに ' + X_COMPOSE_URL + ' と入力してください。');
+        }
+    });
+
+    $('#closePostGuide').on('click', () => $postGuide.hide());
+    $postGuide.on('click', event => {
+        if (event.target === event.currentTarget) {
+            $postGuide.hide();
+        }
     });
 
     // 画像の読み込み後に自然サイズと表示サイズを初期化する

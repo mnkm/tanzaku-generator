@@ -39,10 +39,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Zen+Kurenaido&display=swap" rel="stylesheet">
-    <!-- UI操作、ドラッグ、縦書き描画に使用するライブラリ（CDNを使わず、npmで管理してjs/vendorから読み込む。版はpackage.json参照） -->
+    <!-- UI操作とドラッグに使用するライブラリ（CDNを使わず、npmで管理してjs/vendorから読み込む。版はpackage.json参照） -->
     <script src="./js/vendor/jquery.min.js"></script>
     <script src="./js/vendor/interact.min.js"></script>
-    <script src="./js/vendor/vertical_text_canvas.js"></script>
 </head>
 
 <body>
@@ -109,6 +108,25 @@
                 <button id="confirmDelete">はい</button>
                 <button id="cancelDelete">いいえ</button>
             </div>
+        </div>
+    </div>
+
+    <!-- X への投稿の案内。画像を保存したあとに開く -->
+    <div id="postGuide" class="modal">
+        <div class="modal-content post-guide" role="dialog" aria-modal="true" aria-labelledby="postGuideTitle">
+            <h2 id="postGuideTitle">X に投稿する</h2>
+            <p>画像を保存しました。X に投稿するときに背景の透明な部分を残すには、X のアプリではなく、ブラウザで開いた x.com から投稿してください。</p>
+            <ol>
+                <li>下の「x.com を開く」で、ブラウザの新しいタブに投稿画面を開きます。</li>
+                <li>保存した画像を添付して投稿します。</li>
+            </ol>
+            <p class="post-guide-note">X のアプリが開いたときは、「x.com を開く」を長押しして、新しいタブで開いてください。それでもアプリが開くときは、「URL をコピー」を押し、ブラウザの新しいタブのアドレスバーに貼り付けて開いてください。ブラウザで x.com にログインしていない場合は、先にログインしてください。</p>
+            <div class="post-guide-actions">
+                <a id="openX" class="post-guide-button is-primary" href="https://x.com/compose/post" target="_blank" rel="noopener">x.com を開く</a>
+                <button id="copyXUrl" class="post-guide-button" type="button">URL をコピー</button>
+            </div>
+            <p id="copyXUrlStatus" class="post-guide-status" aria-live="polite"></p>
+            <button id="closePostGuide" class="post-guide-button" type="button">閉じる</button>
         </div>
     </div>
 
