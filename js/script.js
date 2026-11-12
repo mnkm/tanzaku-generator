@@ -481,19 +481,11 @@ $(function () {
         link.click();
     }
 
-    // 合成した画像をPNGとして保存する
-    $('#downloadBtn').on('click', async function () {
-        const canvas = await renderOutputCanvas();
-        if (canvas) {
-            downloadCanvas(canvas);
-        }
-    });
-
-    // X に投稿するボタン(モック)。端末の共有メニューから X のアプリに渡すと JPEG に変わって透過が消えるため、
-    // 画像を保存して、ブラウザの x.com から投稿するよう案内する
+    // 合成した画像をPNGとして保存し、X への投稿の案内を出す。
+    // X のアプリから投稿すると JPEG に変わって透過が消えるため、ブラウザの x.com から投稿するよう案内する
     const X_COMPOSE_URL = 'https://x.com/compose/post';
 
-    $('#shareBtn').on('click', async function () {
+    $('#downloadBtn').on('click', async function () {
         const canvas = await renderOutputCanvas();
         if (!canvas) {
             return;
